@@ -1,0 +1,143 @@
+/*
+ * Modal chrome for the CodeCogs Equation Editor extension for Tiptap.
+ *
+ * Tiptap has no built-in dialog API (it is headless by design - the host app builds its own
+ * UI), so this extension draws a minimal modal of its own, shared with the double-click-to-
+ * edit view. Everything the modal wraps is styled by eqneditor.css, loaded separately from
+ * the editor host (see src/dialog.js); this file is only the frame around it.
+ */
+
+.cc-eqneditor-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    background: rgba(0, 0, 0, 0.45);
+    align-items: center;
+    justify-content: center;
+}
+
+.cc-eqneditor-overlay.cc-eqneditor-open {
+    display: flex;
+}
+
+.cc-eqneditor-modal {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    width: min(850px, 96vw);
+    height: min(600px, 90vh);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+}
+
+.cc-eqneditor-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+    font-size: 15px;
+    color: #1c2530;
+    flex: 0 0 auto;
+}
+
+.cc-eqneditor-modal-logo {
+    display: inline-flex;
+    color: #1c2530;
+}
+
+.cc-eqneditor-modal-header span {
+    flex: 1;
+}
+
+.cc-eqneditor-modal-close {
+    border: 0;
+    background: transparent;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    color: #52606d;
+    padding: 2px 6px;
+}
+
+.cc-eqneditor-modal-close:hover {
+    color: #1c2530;
+}
+
+.cc-eqneditor-modal-body {
+    padding: 14px;
+    overflow: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+}
+
+.cc-eqneditor-modal-body .CCEqnEditor {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.cc-eqneditor-modal-body .CCEditorBar { flex: 0 0 auto; }
+
+.cc-eqneditor-modal-body .CCMathViewHost {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+}
+
+.cc-eqneditor-modal-body .CCLatexInput {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+}
+
+/* No rendered-equation preview in the dialog any more - MathView is the whole editing
+   surface. The <img> stays in the DOM (EqEditor.Output needs an element to bind to, to build
+   the SVG URL for the "Image (SVG)" insert mode) but is never shown. */
+.CCEqnOutput-hidden {
+    display: none !important;
+}
+
+.cc-eqneditor-modal-footer {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    border-top: 1px solid #e2e8f0;
+    flex: 0 0 auto;
+}
+
+.cc-eqneditor-modal-footer select {
+    font-size: 13px;
+    padding: 5px 6px;
+}
+
+.cc-eqneditor-modal-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+}
+
+.cc-eqneditor-modal-actions button {
+    padding: 7px 16px;
+    border-radius: 4px;
+    border: 1px solid #cbd5e0;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.cc-eqneditor-modal-actions button.cc-eqneditor-modal-ok {
+    background: #2c7a4b;
+    border-color: #2c7a4b;
+    color: #fff;
+}

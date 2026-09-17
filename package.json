@@ -1,0 +1,46 @@
+{
+  "name": "@codecogs/eqneditor-tiptap",
+  "version": "1.0.0",
+  "description": "CodeCogs Equation Editor extension for Tiptap",
+  "keywords": [
+    "tiptap",
+    "tiptap-extension",
+    "prosemirror",
+    "equation",
+    "equation-editor",
+    "latex",
+    "mathml",
+    "maths"
+  ],
+  "homepage": "https://editor.codecogs.com/docs/2-plugins",
+  "type": "module",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./eqneditor.css": "./eqneditor.css"
+  },
+  "files": [
+    "src",
+    "eqneditor.css",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --experimental-vm-modules test/eqneditor.test.js",
+    "start": "npx --yes http-server -o /example.html"
+  },
+  "author": "CodeCogs",
+  "license": "MIT",
+  "peerDependencies": {
+    "@tiptap/core": ">=2.0.0"
+  },
+  "devDependencies": {
+    "@tiptap/core": "^2.11.5",
+    "@tiptap/extension-document": "^2.11.5",
+    "@tiptap/extension-paragraph": "^2.11.5",
+    "@tiptap/extension-text": "^2.11.5",
+    "@tiptap/pm": "^2.11.5",
+    "@tiptap/starter-kit": "^2.11.5",
+    "jsdom": "^25.0.1"
+  }
+}

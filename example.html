@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<!--
+  A complete, working example of Tiptap with the CodeCogs Equation Editor extension.
+
+  No npm install or build step: Tiptap core and StarterKit load as native ES modules from a
+  CDN via the import map below, and this extension's own source (./src/index.js) loads the
+  same way - it is plain ESM, exactly what a bundler would consume in a real app. Just open
+  this file in a browser (or `npm start`, which does the same via a static server - opening it
+  as file:// directly will not work, since ES module imports are blocked on the file: scheme).
+
+  The plugin fetches the Equation Editor itself from editor.codecogs.com, so this page needs a
+  network connection.
+-->
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CodeCogs Equation Editor - Tiptap example</title>
+
+    <link rel="stylesheet" href="./eqneditor.css">
+
+    <style>
+        body { font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+               max-width: 900px; margin: 0 auto; padding: 24px; color: #1c2530; }
+        p.hint { color: #52606d; font-size: 14px; }
+        .toolbar { border: 1px solid #cbd5e0; border-bottom: none; border-radius: 6px 6px 0 0;
+                   padding: 6px 8px; display: flex; gap: 6px; background: #f7f9fb; }
+        .toolbar button { padding: 6px 10px; border-radius: 4px; border: 1px solid #cbd5e0;
+                           background: #fff; cursor: pointer; font-size: 13px; }
+        .toolbar button.is-active { background: #2c7a4b; border-color: #2c7a4b; color: #fff; }
+        #editor { border: 1px solid #cbd5e0; border-radius: 0 0 6px 6px; padding: 14px; min-height: 200px; }
+        #editor .ProseMirror { outline: none; }
+        #editor img { vertical-align: middle; }
+    </style>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "@tiptap/core": "https://cdn.jsdelivr.net/npm/@tiptap/core@2.11.5/+esm",
+            "@tiptap/starter-kit": "https://cdn.jsdelivr.net/npm/@tiptap/starter-kit@2.11.5/+esm"
+        }
+    }
+    </script>
+</head>
+<body>
+    <h1>CodeCogs Equation Editor in Tiptap</h1>
+    <p class="hint">
+        Press the <strong>fx</strong> button to insert an equation, or double-click the
+        equation below to edit it.
+    </p>
+
+    <div class="toolbar">
+        <button id="btn-bold"><strong>B</strong></button>
+        <button id="btn-italic"><em>i</em></button>
+        <button id="btn-eqn">fx</button>
+    </div>
+    <div id="editor"></div>
+
+    <script type="module">
+        // Dynamic imports + a visible catch, rather than plain top-level static imports:
+        // a failed static import fails the whole module silently in some environments, with
+        // nothing in the page and no obvious console entry - worth the extra robustness on a
+        // page whose entire job is to demonstrate that the import actually works.
+        try {
+            const { Editor } = await import('@tiptap/core');
+            const { default: StarterKit } = await import('@tiptap/starter-kit');
+            const { EqnEditor } = await import('./src/index.js');
+
+            const editor = new Editor({
+                element: document.querySelector('#editor'),
+                extensions: [
+                    StarterKit,
+                    // Points this dev example at the local eqneditor-v5-www dev server
+                    // rather than production, so in-progress features (the new toolbar,
+                    // MathView-by-default) show up here before they are live at
+                    // editor.codecogs.com. Remove both for production.
+                    EqnEditor.configure({
+                        scriptUrl: 'http://localhost:8010/eqneditor.api.min.js',
+                        cssUrl: 'http://localhost:8010/eqneditor.css'
+                    })
+                ],
+                content: `
+                    <p>Sample text and an equation:</p>
+                    <p><img src="https://latex.codecogs.com/svg.image?\\sum_{i=0}^{n}a_i^2&plus;b"
+                            alt="\\sum_{i=0}^{n}a_i^2+b"></p>
+                    <p>Double-click the equation above to edit it.</p>
+                `
+            });
+
+            document.getElementById('btn-bold').addEventListener('click', () => editor.chain().focus().toggleBold().run());
+            document.getElementById('btn-italic').addEventListener('click', () => editor.chain().focus().toggleItalic().run());
+            document.getElementById('btn-eqn').addEventListener('click', () => editor.commands.insertEquation());
+        } catch (e) {
+            document.body.insertAdjacentHTML('afterbegin',
+                '<pre style="color:red;white-space:pre-wrap">' + (e && e.stack || e) + '</pre>');
+        }
+    </script>
+</body>
+</html>
