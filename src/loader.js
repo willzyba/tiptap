@@ -32,6 +32,22 @@ export function loadScriptOnce( url ) {
     return scriptPromises[ url ];
 }
 
+// EqEditor.init() switches the converter every TextArea/MathView/Toolbar construction takes on
+// to fxTeX Pro - skip it and they keep the placeholder converter for their whole lifetime, even
+// once eqneditor.api.min.js itself has loaded. Called once per page; an empty licence is the
+// normal, expected state until a real one is configured.
+var initPromise = null;
+
+export function ensureInit( licence ) {
+    if ( initPromise ) return initPromise;
+    initPromise = ( typeof window !== 'undefined' && typeof window.EqEditor !== 'undefined' && typeof window.EqEditor.init === 'function' )
+        ? window.EqEditor.init( { licence: licence || '' } ).catch( function ( err ) {
+            window.console && console.warn( 'fxTeX Pro: ' + ( err && err.message || err ) );
+        } )
+        : Promise.resolve();
+    return initPromise;
+}
+
 export function loadCssOnce( url ) {
     if ( document.querySelector( 'link[href="' + url + '"]' ) ) return;
     var link = document.createElement( 'link' );
@@ -79,14 +95,81 @@ export function setShowLatexPreference( visible ) {
 // eqneditor.css. !important throughout, injected once rather than relying on load order
 // against eqneditor.css: which stylesheet's rule wins would otherwise depend on which finishes
 // loading last.
-export function injectStyleOverridesOnce() {
+// The API's own injected @font-face for "Latin Modern Math" only carries
+// local("Latin Modern Math") - no url() fallback - so it silently falls back to a generic
+// serif unless that exact font happens to be installed. A later @font-face for the same
+// family replaces the API's src list rather than merging with it, so redeclaring it here
+// with a real url() fixes every equation and symbol on the page, not just this dialog's.
+export function injectStyleOverridesOnce( fontUrl ) {
     if ( document.getElementById( 'cc-eqneditor-style-overrides' ) ) return;
     var style = document.createElement( 'style' );
     style.id = 'cc-eqneditor-style-overrides';
     style.textContent =
+        '@font-face { font-family: "Latin Modern Math"; font-display: swap; ' +
+            'src: local("Latin Modern Math"), url("' + fontUrl + '") format("opentype"); }' +
+        // Undo host resets (e.g. .cke_reset_all *) inside the toolbar icons and the maths view's MathML.
+        '.CCToolbar svg, .CCToolbar svg * { font: revert-layer !important; }' +
+        '.CCToolbar svg * { width: revert-layer !important; height: revert-layer !important; }' +
+        '.CCToolbar svg g[font-family="fxTeX Toolbar"] { color: #000 !important; }' +
+        '.CCMathView math, .CCMathView math * { font: revert-layer !important; ' +
+            'width: revert-layer !important; height: revert-layer !important; padding: revert-layer !important; ' +
+            'margin: revert-layer !important; text-transform: revert-layer !important; text-align: revert-layer !important; ' +
+            'box-sizing: revert-layer !important; white-space: revert-layer !important; }' +
+        apiMathRules() +
+        // The bottom bar: toggles left, Insert-as and the dialog's buttons right, one type size. All !important - host dialog resets otherwise restyle it.
+        '.cc-eqn-bar { display: flex !important; align-items: center !important; gap: 16px !important; flex: 0 0 auto !important; ' +
+            'margin: 8px 0 0 !important; padding: 10px 0 0 !important; border: 0 !important; border-top: 1px solid #e2e8f0 !important; ' +
+            'background: none !important; font: 13px/1.3 system-ui, -apple-system, "Segoe UI", Arial, sans-serif !important; color: #1c2530 !important; }' +
+        '.cc-eqn-bar-right { display: flex !important; align-items: center !important; gap: 8px !important; margin: 0 0 0 auto !important; padding: 0 !important; }' +
+        '.cc-eqn-bar .cc-switch { display: inline-flex !important; align-items: center !important; gap: 6px !important; margin: 0 !important; ' +
+            'padding: 0 !important; font: inherit !important; color: #54647c !important; cursor: pointer !important; user-select: none !important; white-space: nowrap !important; }' +
+        '.cc-eqn-bar .cc-switch input { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; ' +
+            'padding: 0 !important; border: 0 !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; opacity: 0 !important; }' +
+        '.cc-eqn-bar .cc-switch-track { position: relative !important; display: inline-block !important; flex: 0 0 auto !important; width: 28px !important; ' +
+            'height: 16px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 8px !important; ' +
+            'background: #ccc !important; transition: background .2s !important; }' +
+        '.cc-eqn-bar .cc-switch-knob { position: absolute !important; display: block !important; top: 2px !important; left: 2px !important; ' +
+            'width: 12px !important; height: 12px !important; margin: 0 !important; border-radius: 50% !important; background: #fff !important; transition: left .2s !important; }' +
+        '.cc-eqn-bar .cc-switch input:checked + .cc-switch-track { background: #4caf50 !important; }' +
+        '.cc-eqn-bar .cc-switch input:checked + .cc-switch-track .cc-switch-knob { left: 14px !important; }' +
+        '.cc-eqn-bar .cc-switch input:focus-visible + .cc-switch-track { outline: 2px solid #003794 !important; outline-offset: 2px !important; }' +
+        '.cc-eqn-bar .cc-switch input:disabled ~ * { opacity: .5 !important; cursor: default !important; }' +
+        '.cc-eqn-bar .cc-switch-label { font: inherit !important; color: inherit !important; }' +
+        '.cc-eqn-bar .cc-switch input:checked ~ .cc-switch-label { color: #003794 !important; font-weight: 600 !important; }' +
+        '.cc-eqn-bar .cc-eqn-select { width: auto !important; height: 30px !important; margin: 0 !important; padding: 0 8px !important; ' +
+            'border: 1px solid #cbd5e0 !important; border-radius: 4px !important; background: #fff !important; font: inherit !important; color: #1c2530 !important; cursor: pointer !important; }' +
+        '.cc-eqn-bar .cc-eqn-btn { display: inline-flex !important; align-items: center !important; height: 30px !important; margin: 0 !important; ' +
+            'padding: 0 16px !important; border: 1px solid #cbd5e0 !important; border-radius: 4px !important; background: #fff !important; ' +
+            'font: inherit !important; color: #1c2530 !important; cursor: pointer !important; box-shadow: none !important; }' +
+        '.cc-eqn-bar .cc-eqn-btn * { font: inherit !important; color: inherit !important; }' +
+        '.cc-eqn-bar .cc-eqn-btn.cc-eqn-primary { background: #2c7a4b !important; border-color: #2c7a4b !important; color: #fff !important; }' +
+        '.cc-eqneditor-modal-footer.cc-eqn-bar { margin: 0 !important; padding: 10px 14px !important; }' +
         '.CCMathViewHost, .CCLatexInput { min-height: 220px !important; }' +
         '.CCEqnEditor[data-latex="on"] .CCMathViewHost { display: none !important; }' +
         '.CCEqnEditor[data-latex="off"] .CCLatexInput { display: none !important; }' +
         '.CCEqnEditor[data-inline="on"] .CCMathViewHost { justify-content: flex-start !important; }';
     document.head.appendChild( style );
+}
+
+// Re-asserts the API's own .CCMathView/.fxtex rules, which host resets and revert-layer override.
+function apiMathRules() {
+    var out = '';
+    for ( var i = 0; i < document.styleSheets.length; i++ ) {
+        var rules;
+        try { rules = document.styleSheets[ i ].cssRules; } catch ( e ) { continue; }
+        for ( var j = 0; j < rules.length; j++ ) {
+            var r = rules[ j ], decls = '';
+            if ( !r.selectorText || !/(^|,)\s*\.(fxtex|CCMathView)\b/.test( r.selectorText ) ) continue;
+            for ( var k = 0; k < r.style.length; k++ ) {
+                decls += r.style[ k ] + ':' + r.style.getPropertyValue( r.style[ k ] ) + ' !important;';
+            }
+            if ( decls ) {
+                out += r.selectorText.split( ',' ).map( function ( s ) {
+                    s = s.trim();
+                    return /^\.CCMathView\b/.test( s ) ? s : '.CCMathView ' + s;
+                } ).join( ',' ) + '{' + decls + '}';
+            }
+        }
+    }
+    return out;
 }

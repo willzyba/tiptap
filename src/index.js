@@ -60,6 +60,9 @@ export var EqnEditor = Node.create( {
             scriptUrl: null,
             cssUrl: null,
             mathmlCssUrl: null,
+            // Passed straight to EqEditor.init() - an empty licence is the normal, expected
+            // state until a real one is configured, not a required option.
+            licence: '',
             HTMLAttributes: {}
         };
     },
@@ -162,7 +165,8 @@ export var EqnEditor = Node.create( {
                     scriptUrl: extensionOptions.scriptUrl || ( 'https://' + extensionOptions.server + '/eqneditor.api.min.js' ),
                     cssUrl: extensionOptions.cssUrl || ( 'https://' + extensionOptions.server + '/eqneditor.css' ),
                     mathmlCssUrl: extensionOptions.mathmlCssUrl || ( 'https://' + extensionOptions.server + '/fxtex.css' ),
-                    renderUrl: extensionOptions.renderUrl
+                    renderUrl: extensionOptions.renderUrl,
+                    licence: extensionOptions.licence
                 } );
 
                 dialog.open( node.attrs.latex ).then( function ( result ) {
@@ -207,7 +211,8 @@ export var EqnEditor = Node.create( {
                         scriptUrl: extensionOptions.scriptUrl || ( 'https://' + extensionOptions.server + '/eqneditor.api.min.js' ),
                         cssUrl: extensionOptions.cssUrl || ( 'https://' + extensionOptions.server + '/eqneditor.css' ),
                         mathmlCssUrl: extensionOptions.mathmlCssUrl || ( 'https://' + extensionOptions.server + '/fxtex.css' ),
-                        renderUrl: extensionOptions.renderUrl
+                        renderUrl: extensionOptions.renderUrl,
+                        licence: extensionOptions.licence
                     } );
 
                     dialog.open( '' ).then( function ( result ) {

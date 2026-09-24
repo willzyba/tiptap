@@ -116,28 +116,6 @@
     flex: 0 0 auto;
 }
 
-.cc-eqneditor-modal-footer select {
-    font-size: 13px;
-    padding: 5px 6px;
-}
 
-.cc-eqneditor-modal-actions {
-    margin-left: auto;
-    display: flex;
-    gap: 8px;
-}
 
-.cc-eqneditor-modal-actions button {
-    padding: 7px 16px;
-    border-radius: 4px;
-    border: 1px solid #cbd5e0;
-    background: #fff;
-    cursor: pointer;
-    font-size: 14px;
-}
 
-.cc-eqneditor-modal-actions button.cc-eqneditor-modal-ok {
-    background: #2c7a4b;
-    border-color: #2c7a4b;
-    color: #fff;
-}

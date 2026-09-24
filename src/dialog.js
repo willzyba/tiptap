@@ -1,4 +1,4 @@
-import { loadScriptOnce, loadCssOnce, injectStyleOverridesOnce } from './loader.js';
+import { loadScriptOnce, loadCssOnce, injectStyleOverridesOnce, ensureInit } from './loader.js';
 
 // Same fx wordmark used by the CKEditor 5, TinyMCE and Froala plugins.
 export var LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 18 20">' +
@@ -72,7 +72,7 @@ export function createEqnEditorDialog( config ) {
                         '<img id="' + ids.output + '" class="CCEqnOutput-hidden" alt="">' +
                     '</div>' +
                 '</div>' +
-                '<div class="cc-eqneditor-modal-footer">' +
+                '<div class="cc-eqneditor-modal-footer cc-eqn-bar">' +
                     '<label class="cc-switch" title="Left-align the equation instead of centring it">' +
                         '<input type="checkbox" class="cc-eqneditor-inline-toggle">' +
                         '<span class="cc-switch-track"><span class="cc-switch-knob"></span></span>' +
@@ -83,13 +83,13 @@ export function createEqnEditorDialog( config ) {
                         '<span class="cc-switch-track"><span class="cc-switch-knob"></span></span>' +
                         '<span class="cc-switch-label">LaTeX markup</span>' +
                     '</label>' +
-                    '<select class="cc-eqneditor-insert-mode" title="How to insert the equation">' +
-                        '<option value="mathml" selected>Insert as MathML</option>' +
-                        '<option value="svg">Insert as image (SVG)</option>' +
-                    '</select>' +
-                    '<div class="cc-eqneditor-modal-actions">' +
-                        '<button type="button" class="cc-eqneditor-modal-cancel">Cancel</button>' +
-                        '<button type="button" class="cc-eqneditor-modal-ok">Ok</button>' +
+                    '<div class="cc-eqn-bar-right cc-eqneditor-modal-actions">' +
+                        '<select class="cc-eqneditor-insert-mode cc-eqn-select" title="How to insert the equation">' +
+                            '<option value="mathml" selected>Insert as MathML</option>' +
+                            '<option value="svg">Insert as image (SVG)</option>' +
+                        '</select>' +
+                        '<button type="button" class="cc-eqn-btn cc-eqneditor-modal-cancel">Cancel</button>' +
+                        '<button type="button" class="cc-eqn-btn cc-eqn-primary cc-eqneditor-modal-ok">OK</button>' +
                     '</div>' +
                 '</div>' +
             '</div>';
@@ -124,7 +124,7 @@ export function createEqnEditorDialog( config ) {
             .addOutput( eqOutput )
             .addHistoryMenu( new EqEditor.History( ids.history ) );
 
-        eqToolbar = EqEditor.Toolbar.link( ids.toolbar, 'default', 1.4 ).addTextArea( eqTextArea );
+        eqToolbar = EqEditor.Toolbar.link( ids.toolbar ).addTextArea( eqTextArea );
 
         var latexToggle = document.querySelector( '#' + ids.overlay + ' .cc-eqneditor-latex-toggle' );
 
@@ -169,8 +169,8 @@ export function createEqnEditorDialog( config ) {
                 cancelBtn.onclick = function () { finish( null ); };
                 closeBtn.onclick = function () { finish( null ); };
 
-                apiReady.then( function () {
-                    injectStyleOverridesOnce();
+                apiReady.then( function () { return ensureInit( config.licence ); } ).then( function () {
+                    injectStyleOverridesOnce( config.cssUrl.slice( 0, config.cssUrl.lastIndexOf( '/' ) + 1 ) + 'prototypes/latinmodern-math.otf' );
                     mount();
                     eqTextArea.clear();
                     if ( initialLatex ) eqTextArea.insert( initialLatex, initialLatex.length );
