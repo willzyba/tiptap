@@ -1,15 +1,9 @@
 <!DOCTYPE html>
 <!--
-  A complete, working example of Tiptap with the CodeCogs Equation Editor extension.
-
-  No npm install or build step: Tiptap core and StarterKit load as native ES modules from a
-  CDN via the import map below, and this extension's own source (./src/index.js) loads the
-  same way - it is plain ESM, exactly what a bundler would consume in a real app. Just open
-  this file in a browser (or `npm start`, which does the same via a static server - opening it
-  as file:// directly will not work, since ES module imports are blocked on the file: scheme).
-
-  The plugin fetches the Equation Editor itself from editor.codecogs.com, so this page needs a
-  network connection.
+  Tiptap with the CodeCogs Equation Editor extension (src/ in this folder). Tiptap loads from a
+  CDN through the import map, and the extension is plain ES modules, so there is no build step -
+  but it must be served over http(s), not opened as a file.
+  Replace the licence with your own fxTeX Pro licence key (fx_pk_...), from editor.codecogs.com.
 -->
 <html lang="en">
 <head>
@@ -70,13 +64,9 @@
                 element: document.querySelector('#editor'),
                 extensions: [
                     StarterKit,
-                    // Points this dev example at the local eqneditor-v5-www dev server
-                    // rather than production, so in-progress features (the new toolbar,
-                    // MathView-by-default) show up here before they are live at
-                    // editor.codecogs.com. Remove both for production.
                     EqnEditor.configure({
-                        scriptUrl: 'http://localhost:8010/eqneditor.api.min.js',
-                        cssUrl: 'http://localhost:8010/eqneditor.css'
+                        server: '{{EQN_SERVER}}',
+                        licence: '{{FXTEXPRO_KEY}}'
                     })
                 ],
                 content: `

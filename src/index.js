@@ -6,6 +6,11 @@ import { domToOutputSpec } from './dom-to-output-spec.js';
 var DEFAULT_EDITOR_HOST = 'editor.codecogs.com';
 var DEFAULT_RENDER_URL = 'https://latex.codecogs.com';
 
+// A bare host means https; a full origin (e.g. http://localhost:8010 for local development) is used as it is.
+function serverOrigin( host ) {
+    return /^https?:\/\//.test( host ) ? host.replace( /\/+$/, '' ) : 'https://' + host;
+}
+
 /**
  * Parses one of EqEditor's rendering URLs (the four codecogs.com equation-image endpoints)
  * back into the LaTeX that produced it - used when loading or pasting in content this
@@ -162,9 +167,9 @@ export var EqnEditor = Node.create( {
 
             dom.addEventListener( 'dblclick', function () {
                 var dialog = createEqnEditorDialog( {
-                    scriptUrl: extensionOptions.scriptUrl || ( 'https://' + extensionOptions.server + '/eqneditor.api.min.js' ),
-                    cssUrl: extensionOptions.cssUrl || ( 'https://' + extensionOptions.server + '/eqneditor.css' ),
-                    mathmlCssUrl: extensionOptions.mathmlCssUrl || ( 'https://' + extensionOptions.server + '/fxtex.css' ),
+                    scriptUrl: extensionOptions.scriptUrl || ( serverOrigin( extensionOptions.server ) + '/eqneditor.api.min.js' ),
+                    cssUrl: extensionOptions.cssUrl || ( serverOrigin( extensionOptions.server ) + '/eqneditor.css' ),
+                    mathmlCssUrl: extensionOptions.mathmlCssUrl || ( serverOrigin( extensionOptions.server ) + '/fxtex.css' ),
                     renderUrl: extensionOptions.renderUrl,
                     licence: extensionOptions.licence
                 } );
@@ -208,9 +213,9 @@ export var EqnEditor = Node.create( {
                     var editor = props.editor;
 
                     var dialog = createEqnEditorDialog( {
-                        scriptUrl: extensionOptions.scriptUrl || ( 'https://' + extensionOptions.server + '/eqneditor.api.min.js' ),
-                        cssUrl: extensionOptions.cssUrl || ( 'https://' + extensionOptions.server + '/eqneditor.css' ),
-                        mathmlCssUrl: extensionOptions.mathmlCssUrl || ( 'https://' + extensionOptions.server + '/fxtex.css' ),
+                        scriptUrl: extensionOptions.scriptUrl || ( serverOrigin( extensionOptions.server ) + '/eqneditor.api.min.js' ),
+                        cssUrl: extensionOptions.cssUrl || ( serverOrigin( extensionOptions.server ) + '/eqneditor.css' ),
+                        mathmlCssUrl: extensionOptions.mathmlCssUrl || ( serverOrigin( extensionOptions.server ) + '/fxtex.css' ),
                         renderUrl: extensionOptions.renderUrl,
                         licence: extensionOptions.licence
                     } );

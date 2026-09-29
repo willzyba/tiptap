@@ -108,8 +108,11 @@ export function injectStyleOverridesOnce( fontUrl ) {
         '@font-face { font-family: "Latin Modern Math"; font-display: swap; ' +
             'src: local("Latin Modern Math"), url("' + fontUrl + '") format("opentype"); }' +
         // Undo host resets (e.g. .cke_reset_all *) inside the toolbar icons and the maths view's MathML.
-        '.CCToolbar svg, .CCToolbar svg * { font: revert-layer !important; }' +
-        '.CCToolbar svg * { width: revert-layer !important; height: revert-layer !important; }' +
+        '.CCToolbar svg:has(g[font-family]), .CCToolbar svg:has(g[font-family]) * { font: revert-layer !important; }' +
+        // Older API builds draw the icons as plain <text>, fonted by the API's own .cc_panel rule instead.
+        '.CCToolbar svg:not(:has(g[font-family])) { font: normal normal 16px "fxTeX Toolbar" !important; }' +
+        '.CCToolbar svg:not(:has(g[font-family])) * { font: inherit !important; }' +
+        '.CCToolbar svg, .CCToolbar svg * { width: revert-layer !important; height: revert-layer !important; max-width: revert-layer !important; }' +
         '.CCToolbar svg g[font-family="fxTeX Toolbar"] { color: #000 !important; }' +
         '.CCMathView math, .CCMathView math * { font: revert-layer !important; ' +
             'width: revert-layer !important; height: revert-layer !important; padding: revert-layer !important; ' +
@@ -120,7 +123,7 @@ export function injectStyleOverridesOnce( fontUrl ) {
         '.cc-eqn-bar { display: flex !important; align-items: center !important; gap: 16px !important; flex: 0 0 auto !important; ' +
             'margin: 8px 0 0 !important; padding: 10px 0 0 !important; border: 0 !important; border-top: 1px solid #e2e8f0 !important; ' +
             'background: none !important; font: 13px/1.3 system-ui, -apple-system, "Segoe UI", Arial, sans-serif !important; color: #1c2530 !important; }' +
-        '.cc-eqn-bar-right { display: flex !important; align-items: center !important; gap: 8px !important; margin: 0 0 0 auto !important; padding: 0 !important; }' +
+        '.cc-eqn-bar-right { display: flex !important; align-items: center !important; gap: 8px !important; margin: 0 0 0 auto !important; padding: 0 !important; font: inherit !important; color: inherit !important; }' +
         '.cc-eqn-bar .cc-switch { display: inline-flex !important; align-items: center !important; gap: 6px !important; margin: 0 !important; ' +
             'padding: 0 !important; font: inherit !important; color: #54647c !important; cursor: pointer !important; user-select: none !important; white-space: nowrap !important; }' +
         '.cc-eqn-bar .cc-switch input { position: absolute !important; width: 1px !important; height: 1px !important; margin: -1px !important; ' +
