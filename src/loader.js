@@ -75,7 +75,7 @@ export function escapeHtml( s ) {
 // Remembers which view (maths or LaTeX markup) the author last chose, across dialog opens and
 // page loads - a cookie rather than localStorage because it is one line to read without a
 // helper, and every editor instance on the page shares the one preference. Every adapter in
-// eqneditor-v5-plugins uses this exact cookie name, so the choice carries across editors too.
+// fxPlugins uses this exact cookie name, so the choice carries across editors too.
 var LATEX_COOKIE = 'cc_eqneditor_show_latex';
 
 export function getShowLatexPreference( fallback ) {
