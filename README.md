@@ -47,7 +47,7 @@ Passed to `EqnEditor.configure({ ... })`:
 | Option | Default | Meaning |
 |---|---|---|
 | `showLatex` | `true` | Whether the LaTeX markup pane starts visible beneath the maths view. |
-| `server` | `'fxeditor.codecogs.com'` | Host the Equation Editor's own code is loaded from. Change this if you run your own copy. |
+| `server` | `'fxtex.codecogs.com'` | Host the Equation Editor's own code is loaded from. Change this if you run your own copy. |
 | `renderUrl` | `'https://latex.codecogs.com'` | The rendering service that turns an equation into an image. |
 | `insertAs` | `'url'` | How a saved equation is written into the document: `'url'` (an `<img>`), `'latex'` (`$...$`/`$$...$$` **plain text**, needs [fxTeX](https://editor.codecogs.com/docs/0-fxtex.php), KaTeX or MathJax on the published page), or `'mathml'` (final markup, needs the stylesheet below). |
 | `latexDisplay` | `true` | With `insertAs: 'latex'`, whether to use `$$` (display) or `$` (inline) delimiters. |
@@ -71,7 +71,7 @@ Browsers' own MathML does not cover everything the converter produces, so a page
 `insertAs: 'mathml'` output needs this line - the same file fxTeX ships:
 
 ```html
-<link rel="stylesheet" href="https://fxeditor.codecogs.com/fxtex.css">
+<link rel="stylesheet" href="https://fxtex.codecogs.com/fxtex.css">
 ```
 
 The extension loads it into the editing view for you; it cannot add it to the page that
