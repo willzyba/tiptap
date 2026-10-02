@@ -180,6 +180,38 @@ export function applyDesign( root, design, latexToggle, insertSelect ) {
         style.textContent = css;
         root.appendChild( style );
     }
+    // The dialog's width and height (`width`, `height`), before any scaling: the box takes the width,
+    // and the editing area whatever height makes the whole dialog the height asked for - measured,
+    // since everything else in it (toolbar rows, the bottom bar) varies with the design. Hosts that
+    // size their dialogs themselves (TinyMCE 4, CKEditor 4) are given both when they open it instead.
+    var sizedBox = root.closest( '.tox-dialog, .mce-window, .cke_dialog, .ck-balloon-panel, .cc-eqneditor-modal, .tc-drop-down' ) || root;
+    if ( !sizedBox.matches( '.mce-window, .cke_dialog' ) ) {
+        if ( Number( design.width ) > 0 ) sizedBox.style.setProperty( 'width', Number( design.width ) + 'px', 'important' );
+        var area = root.querySelector( '.CCMathViewHost' );
+        if ( Number( design.height ) > 0 && area ) {
+            // Measured, then measured again as the dialog settles - the toolbar fits itself to its row
+            // after the dialog first lays out, and the fonts arrive - correcting by the difference each time.
+            // A box with a height of its own (Froala's and Tiptap's modals) sizes to its contents instead.
+            sizedBox.style.setProperty( 'height', 'auto', 'important' );
+            var sizing = document.createElement( 'style' );
+            root.appendChild( sizing );
+            var h = 0;
+            var fit = function () {
+                var shown = root.querySelector( '.CCLatexInput' ) && getComputedStyle( area ).display === 'none'
+                    ? root.querySelector( '.CCLatexInput' ) : area;
+                // Scale may already be applied (see below), and on-screen sizes include it.
+                var applied = parseFloat( sizedBox.style.zoom ) || parseFloat( ( sizedBox.style.transform.match( /scale\(([\d.]+)\)/ ) || [] )[ 1 ] ) || 1;
+                var now = h || shown.getBoundingClientRect().height / applied;
+                h = Math.max( 120, Math.round( now + Number( design.height ) - sizedBox.getBoundingClientRect().height / applied ) );
+                // Never taller than the whole dialog asked for: a host that caps its dialog (and scrolls the
+                // rest) would otherwise be chased upwards on every pass.
+                h = Math.min( h, Number( design.height ) );
+                sizing.textContent = '#' + root.id + ' { height: auto !important; } #' + root.id + ' .CCMathViewHost, #' + root.id + ' .CCLatexInput { height: ' + h + 'px !important; min-height: ' + h + 'px !important; }';
+            };
+            fit();
+            [ 150, 500, 1200 ].forEach( function ( t ) { setTimeout( fit, t ); } );
+        }
+    }
     // The whole dialog, box and contents together - see `dialogSize` in the README. Zoomed where
     // the host lays the dialog out (it grows in place); scaled where the host positions it itself
     // (CKEditor, TinyMCE 4, a TiddlyWiki drop-down), so that placement still holds.
