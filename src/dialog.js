@@ -1,4 +1,4 @@
-import { loadScriptOnce, loadCssOnce, injectStyleOverridesOnce, ensureInit } from './loader.js';
+import { loadScriptOnce, loadCssOnce, injectStyleOverridesOnce, ensureInit, applyDesign } from './loader.js';
 
 // Same fx wordmark used by the CKEditor 5, TinyMCE and Froala plugins.
 export var LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 18 20">' +
@@ -37,6 +37,7 @@ export function createEqnEditorDialog( config ) {
         output: 'cc-eqn-tt-output-' + n
     };
 
+    var design = config.design || {};
     var apiReady = loadScriptOnce( config.scriptUrl );
     loadCssOnce( config.cssUrl );
     loadCssOnce( config.mathmlCssUrl );
@@ -124,7 +125,7 @@ export function createEqnEditorDialog( config ) {
             .addOutput( eqOutput )
             .addHistoryMenu( new EqEditor.History( ids.history ) );
 
-        eqToolbar = EqEditor.Toolbar.link( ids.toolbar ).addTextArea( eqTextArea );
+        eqToolbar = EqEditor.Toolbar.link( ids.toolbar, design.toolbar || 'default', design.toolbarScale || 1 ).addTextArea( eqTextArea );
 
         var latexToggle = document.querySelector( '#' + ids.overlay + ' .cc-eqneditor-latex-toggle' );
 
@@ -143,6 +144,9 @@ export function createEqnEditorDialog( config ) {
 
         document.querySelector( '#' + ids.overlay + ' .cc-eqneditor-inline-toggle' )
             .addEventListener( 'change', function ( e ) { applyInline( e.target.checked ); } );
+
+        applyDesign( document.getElementById( ids.root ), design, latexToggle,
+            document.querySelector( '#' + ids.overlay + ' .cc-eqneditor-insert-mode' ) );
     }
 
     return {

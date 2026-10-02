@@ -3,7 +3,7 @@ import { createEqnEditorDialog } from './dialog.js';
 import { decodeEquation } from './loader.js';
 import { domToOutputSpec } from './dom-to-output-spec.js';
 
-var DEFAULT_EDITOR_HOST = 'editor.codecogs.com';
+var DEFAULT_EDITOR_HOST = 'fxeditor.codecogs.com';
 var DEFAULT_RENDER_URL = 'https://latex.codecogs.com';
 
 // A bare host means https; a full origin (e.g. http://localhost:8010 for local development) is used as it is.
@@ -36,8 +36,8 @@ function mathmlToOutputSpec( mathmlHtml ) {
  * host's own toolbar button to call, and handles the dialog and double-click-to-edit itself
  * (see dialog.js). Add it to your extensions list:
  *
- *   import { EqnEditor } from '@codecogs/eqneditor-tiptap';
- *   import '@codecogs/eqneditor-tiptap/eqneditor.css';
+ *   import { EqnEditor } from '@codecogs/fxeditor-tiptap';
+ *   import '@codecogs/fxeditor-tiptap/eqneditor.css';
  *
  *   const editor = new Editor({
  *       extensions: [ StarterKit, EqnEditor.configure({ showLatex: false }) ]
@@ -68,6 +68,8 @@ export var EqnEditor = Node.create( {
             // Passed straight to EqEditor.init() - an empty licence is the normal, expected
             // state until a real one is configured, not a required option.
             licence: '',
+            // How the editor looks - toolbar rows and scale, colour, sizes; see the README.
+            design: {},
             HTMLAttributes: {}
         };
     },
@@ -171,7 +173,8 @@ export var EqnEditor = Node.create( {
                     cssUrl: extensionOptions.cssUrl || ( serverOrigin( extensionOptions.server ) + '/eqneditor.css' ),
                     mathmlCssUrl: extensionOptions.mathmlCssUrl || ( serverOrigin( extensionOptions.server ) + '/fxtex.css' ),
                     renderUrl: extensionOptions.renderUrl,
-                    licence: extensionOptions.licence
+                    licence: extensionOptions.licence,
+                    design: extensionOptions.design
                 } );
 
                 dialog.open( node.attrs.latex ).then( function ( result ) {
@@ -217,7 +220,8 @@ export var EqnEditor = Node.create( {
                         cssUrl: extensionOptions.cssUrl || ( serverOrigin( extensionOptions.server ) + '/eqneditor.css' ),
                         mathmlCssUrl: extensionOptions.mathmlCssUrl || ( serverOrigin( extensionOptions.server ) + '/fxtex.css' ),
                         renderUrl: extensionOptions.renderUrl,
-                        licence: extensionOptions.licence
+                        licence: extensionOptions.licence,
+                    design: extensionOptions.design
                     } );
 
                     dialog.open( '' ).then( function ( result ) {

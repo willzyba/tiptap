@@ -3,7 +3,7 @@
   Tiptap with the CodeCogs Equation Editor extension (src/ in this folder). Tiptap loads from a
   CDN through the import map, and the extension is plain ES modules, so there is no build step -
   but it must be served over http(s), not opened as a file.
-  Replace the licence with your own fxTeX Pro licence key (fx_pk_...), from editor.codecogs.com.
+  Replace the licence with your own fxTeX Pro licence key (fx_pk_...), from fxeditor.codecogs.com/login.
 -->
 <html lang="en">
 <head>
@@ -70,10 +70,12 @@
                     })
                 ],
                 content: `
+                    <!-- sample -->
                     <p>Sample text and an equation:</p>
                     <p><img src="https://latex.codecogs.com/svg.image?\\sum_{i=0}^{n}a_i^2&plus;b"
                             alt="\\sum_{i=0}^{n}a_i^2+b"></p>
                     <p>Double-click the equation above to edit it.</p>
+                    <!-- /sample -->
                 `
             });
 

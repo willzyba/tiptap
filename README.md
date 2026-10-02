@@ -1,4 +1,4 @@
-# @codecogs/eqneditor-tiptap
+# @codecogs/fxeditor-tiptap
 
 The [CodeCogs Equation Editor](https://editor.codecogs.com) as a [Tiptap](https://tiptap.dev)
 node extension.
@@ -12,7 +12,7 @@ the same way the CKEditor 5 plugin does, and supplies its own small modal dialog
 ## Install
 
 ```
-npm install @codecogs/eqneditor-tiptap
+npm install @codecogs/fxeditor-tiptap
 ```
 
 ## Quick start
@@ -20,8 +20,8 @@ npm install @codecogs/eqneditor-tiptap
 ```js
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
-import { EqnEditor } from '@codecogs/eqneditor-tiptap';
-import '@codecogs/eqneditor-tiptap/eqneditor.css';
+import { EqnEditor } from '@codecogs/fxeditor-tiptap';
+import '@codecogs/fxeditor-tiptap/eqneditor.css';
 
 const editor = new Editor({
     element: document.querySelector('#editor'),
@@ -47,7 +47,7 @@ Passed to `EqnEditor.configure({ ... })`:
 | Option | Default | Meaning |
 |---|---|---|
 | `showLatex` | `true` | Whether the LaTeX markup pane starts visible beneath the maths view. |
-| `server` | `'editor.codecogs.com'` | Host the Equation Editor's own code is loaded from. Change this if you run your own copy. |
+| `server` | `'fxeditor.codecogs.com'` | Host the Equation Editor's own code is loaded from. Change this if you run your own copy. |
 | `renderUrl` | `'https://latex.codecogs.com'` | The rendering service that turns an equation into an image. |
 | `insertAs` | `'url'` | How a saved equation is written into the document: `'url'` (an `<img>`), `'latex'` (`$...$`/`$$...$$` **plain text**, needs [fxTeX](https://editor.codecogs.com/docs/0-fxtex.php), KaTeX or MathJax on the published page), or `'mathml'` (final markup, needs the stylesheet below). |
 | `latexDisplay` | `true` | With `insertAs: 'latex'`, whether to use `$$` (display) or `$` (inline) delimiters. |
@@ -71,7 +71,7 @@ Browsers' own MathML does not cover everything the converter produces, so a page
 `insertAs: 'mathml'` output needs this line - the same file fxTeX ships:
 
 ```html
-<link rel="stylesheet" href="https://editor.codecogs.com/fxtex.css">
+<link rel="stylesheet" href="https://fxeditor.codecogs.com/fxtex.css">
 ```
 
 The extension loads it into the editing view for you; it cannot add it to the page that
