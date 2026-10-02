@@ -169,8 +169,8 @@ export var EqnEditor = Node.create( {
 
             dom.addEventListener( 'dblclick', function () {
                 var dialog = createEqnEditorDialog( {
-                    scriptUrl: extensionOptions.scriptUrl || ( serverOrigin( extensionOptions.server ) + '/eqneditor.api.min.js' ),
-                    cssUrl: extensionOptions.cssUrl || ( serverOrigin( extensionOptions.server ) + '/eqneditor.css' ),
+                    scriptUrl: extensionOptions.scriptUrl || ( serverOrigin( extensionOptions.server ) + '/fxeditor.api.min.js' ),
+                    cssUrl: extensionOptions.cssUrl || ( serverOrigin( extensionOptions.server ) + '/fxeditor.css' ),
                     mathmlCssUrl: extensionOptions.mathmlCssUrl || ( serverOrigin( extensionOptions.server ) + '/fxtex.css' ),
                     renderUrl: extensionOptions.renderUrl,
                     licence: extensionOptions.licence,
@@ -216,8 +216,8 @@ export var EqnEditor = Node.create( {
                     var editor = props.editor;
 
                     var dialog = createEqnEditorDialog( {
-                        scriptUrl: extensionOptions.scriptUrl || ( serverOrigin( extensionOptions.server ) + '/eqneditor.api.min.js' ),
-                        cssUrl: extensionOptions.cssUrl || ( serverOrigin( extensionOptions.server ) + '/eqneditor.css' ),
+                        scriptUrl: extensionOptions.scriptUrl || ( serverOrigin( extensionOptions.server ) + '/fxeditor.api.min.js' ),
+                        cssUrl: extensionOptions.cssUrl || ( serverOrigin( extensionOptions.server ) + '/fxeditor.css' ),
                         mathmlCssUrl: extensionOptions.mathmlCssUrl || ( serverOrigin( extensionOptions.server ) + '/fxtex.css' ),
                         renderUrl: extensionOptions.renderUrl,
                         licence: extensionOptions.licence,

@@ -3,7 +3,7 @@
  *
  * Tiptap has no built-in dialog API (it is headless by design - the host app builds its own
  * UI), so this extension draws a minimal modal of its own, shared with the double-click-to-
- * edit view. Everything the modal wraps is styled by eqneditor.css, loaded separately from
+ * edit view. Everything the modal wraps is styled by fxeditor.css, loaded separately from
  * the editor host (see src/dialog.js); this file is only the frame around it.
  */
 

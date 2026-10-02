@@ -34,7 +34,7 @@ export function loadScriptOnce( url ) {
 
 // EqEditor.init() switches the converter every TextArea/MathView/Toolbar construction takes on
 // to fxTeX Pro - skip it and they keep the placeholder converter for their whole lifetime, even
-// once eqneditor.api.min.js itself has loaded. Called once per page; an empty licence is the
+// once fxeditor.api.min.js itself has loaded. Called once per page; an empty licence is the
 // normal, expected state until a real one is configured.
 var initPromise = null;
 
@@ -87,13 +87,13 @@ export function setShowLatexPreference( visible ) {
     document.cookie = LATEX_COOKIE + '=' + ( visible ? '1' : '0' ) + '; path=/; max-age=31536000; SameSite=Lax';
 }
 
-// Gaps in the shared eqneditor.css (loaded separately, asynchronously, from the host
+// Gaps in the shared fxeditor.css (loaded separately, asynchronously, from the host
 // configured in options) this dialog needs but can't assume it will get: editor.codecogs.com,
 // the old default host and still configurable, serves an older stylesheet that predates the CCEqnEditor/
 // CCMathViewHost/CCLatexInput class names entirely (only a local dev mirror does not have this
 // gap), so the maths/LaTeX mutual-exclusion is written defensively here rather than left to
-// eqneditor.css. !important throughout, injected once rather than relying on load order
-// against eqneditor.css: which stylesheet's rule wins would otherwise depend on which finishes
+// fxeditor.css. !important throughout, injected once rather than relying on load order
+// against fxeditor.css: which stylesheet's rule wins would otherwise depend on which finishes
 // loading last.
 // The API's own injected @font-face for "Latin Modern Math" only carries
 // local("Latin Modern Math") - no url() fallback - so it silently falls back to a generic
