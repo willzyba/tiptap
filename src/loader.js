@@ -120,7 +120,7 @@ export function injectStyleOverridesOnce( fontUrl ) {
             'box-sizing: revert-layer !important; white-space: revert-layer !important; }' +
         apiMathRules() +
         // The bottom bar: toggles left, Insert-as and the dialog's buttons right, one type size. All !important - host dialog resets otherwise restyle it.
-        '.cc-eqn-bar { display: flex !important; align-items: center !important; gap: 16px !important; flex: 0 0 auto !important; ' +
+        '.cc-eqn-bar { display: flex !important; flex-wrap: wrap !important; align-items: center !important; gap: 16px !important; flex: 0 0 auto !important; ' +
             'margin: 8px 0 0 !important; padding: 10px 0 0 !important; border: 0 !important; border-top: 1px solid #e2e8f0 !important; ' +
             'background: none !important; font: 13px/1.3 system-ui, -apple-system, "Segoe UI", Arial, sans-serif !important; color: #1c2530 !important; }' +
         '.cc-eqn-bar-right { display: flex !important; align-items: center !important; gap: 8px !important; margin: 0 0 0 auto !important; padding: 0 !important; font: inherit !important; color: inherit !important; }' +
@@ -250,12 +250,12 @@ function apiMathRules() {
         try { rules = document.styleSheets[ i ].cssRules; } catch ( e ) { continue; }
         for ( var j = 0; j < rules.length; j++ ) {
             var r = rules[ j ], decls = '';
-            if ( !r.selectorText || !/(^|,)\s*\.(fxtex|CCMathView)\b/.test( r.selectorText ) ) continue;
+            if ( !r.selectorText || !/(^|,)\s*(:where\(\.fxEditor\)\s*)?\.(fxtex|CCMathView)\b/.test( r.selectorText ) ) continue;
             for ( var k = 0; k < r.style.length; k++ ) {
                 decls += r.style[ k ] + ':' + r.style.getPropertyValue( r.style[ k ] ) + ' !important;';
             }
             if ( decls ) {
-                out += r.selectorText.split( ',' ).map( function ( s ) {
+                out += r.selectorText.replace( /:where\(\.fxEditor\)\s*/g, '' ).split( ',' ).map( function ( s ) {
                     s = s.trim();
                     return /^\.CCMathView\b/.test( s ) ? s : '.CCMathView ' + s;
                 } ).join( ',' ) + '{' + decls + '}';
