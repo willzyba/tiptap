@@ -158,6 +158,10 @@ export function injectStyleOverridesOnce( fontUrl ) {
 // author. The toolbar's rows and scale go to Toolbar.link() itself; everything else is applied
 // here, once the editor is mounted - CSS scoped to this editor's root, then the starting state of
 // the LaTeX toggle and the "Insert as" menu.
+// The dialog's size when the design does not set one: about 700 by 450 pixels.
+var DEFAULT_WIDTH = 700, DEFAULT_HEIGHT = 450;
+function designWidth( design ) { return Number( design && design.width ) > 0 ? Number( design.width ) : DEFAULT_WIDTH; }
+function designHeight( design ) { return Number( design && design.height ) > 0 ? Number( design.height ) : DEFAULT_HEIGHT; }
 var designCount = 0;
 export function applyDesign( root, design, latexToggle, insertSelect ) {
     if ( !root || !design ) return;
@@ -186,9 +190,9 @@ export function applyDesign( root, design, latexToggle, insertSelect ) {
     // size their dialogs themselves (TinyMCE 4, CKEditor 4) are given both when they open it instead.
     var sizedBox = root.closest( '.tox-dialog, .mce-window, .cke_dialog, .ck-balloon-panel, .cc-eqneditor-modal, .tc-drop-down' ) || root;
     if ( !sizedBox.matches( '.mce-window, .cke_dialog' ) ) {
-        if ( Number( design.width ) > 0 ) sizedBox.style.setProperty( 'width', Number( design.width ) + 'px', 'important' );
+        sizedBox.style.setProperty( 'width', designWidth( design ) + 'px', 'important' );
         var area = root.querySelector( '.CCMathViewHost' );
-        if ( Number( design.height ) > 0 && area ) {
+        if ( area ) {
             // Measured, then measured again as the dialog settles - the toolbar fits itself to its row
             // after the dialog first lays out, and the fonts arrive - correcting by the difference each time.
             // A box with a height of its own (Froala's and Tiptap's modals) sizes to its contents instead.
@@ -202,10 +206,10 @@ export function applyDesign( root, design, latexToggle, insertSelect ) {
                 // Scale may already be applied (see below), and on-screen sizes include it.
                 var applied = parseFloat( sizedBox.style.zoom ) || parseFloat( ( sizedBox.style.transform.match( /scale\(([\d.]+)\)/ ) || [] )[ 1 ] ) || 1;
                 var now = h || shown.getBoundingClientRect().height / applied;
-                h = Math.max( 120, Math.round( now + Number( design.height ) - sizedBox.getBoundingClientRect().height / applied ) );
+                h = Math.max( 120, Math.round( now + designHeight( design ) - sizedBox.getBoundingClientRect().height / applied ) );
                 // Never taller than the whole dialog asked for: a host that caps its dialog (and scrolls the
                 // rest) would otherwise be chased upwards on every pass.
-                h = Math.min( h, Number( design.height ) );
+                h = Math.min( h, designHeight( design ) );
                 sizing.textContent = '#' + root.id + ' { height: auto !important; } #' + root.id + ' .CCMathViewHost, #' + root.id + ' .CCLatexInput { height: ' + h + 'px !important; min-height: ' + h + 'px !important; }';
             };
             fit();

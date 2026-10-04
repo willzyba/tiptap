@@ -135,7 +135,9 @@ export var EqnEditor = Node.create( {
             return mathmlToOutputSpec( node.attrs.mathml );
         }
 
+        // class="fxtex", as every inserted equation has: a site sizes them all with one rule.
         return [ 'img', mergeAttributes( this.options.HTMLAttributes, HTMLAttributes, {
+            class: 'fxtex',
             src: node.attrs.src || '',
             alt: node.attrs.latex || ''
         } ) ];
@@ -160,6 +162,7 @@ export var EqnEditor = Node.create( {
                 } else {
                     dom.innerHTML = '';
                     var img = document.createElement( 'img' );
+                    img.className = 'fxtex';
                     img.src = n.attrs.src || '';
                     img.alt = n.attrs.latex || '';
                     dom.appendChild( img );
