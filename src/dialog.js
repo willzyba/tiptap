@@ -1,4 +1,4 @@
-import { loadScriptOnce, loadCssOnce, injectStyleOverridesOnce, ensureInit, applyDesign } from './loader.js';
+import { loadScriptOnce, loadCssOnce, injectStyleOverridesOnce, ensureInit, applyDesign, focusEditor } from './loader.js';
 
 // Same fx wordmark used by the CKEditor 5, TinyMCE and Froala plugins.
 export var LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 18 20">' +
@@ -179,6 +179,7 @@ export function createEqnEditorDialog( config ) {
                     eqTextArea.clear();
                     if ( initialLatex ) eqTextArea.insert( initialLatex, initialLatex.length );
                     eqTextArea.notifyOutputs();
+                    focusEditor( document.getElementById( ids.root ) );
                 } ).catch( function ( err ) {
                     console.error( err );
                     finish( null );
