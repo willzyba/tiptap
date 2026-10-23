@@ -1,4 +1,4 @@
-import { loadScriptOnce, loadCssOnce, injectStyleOverridesOnce, ensureInit, applyDesign, focusEditor, addPredictor } from './loader.js';
+import { loadScriptOnce, loadCssOnce, injectStyleOverridesOnce, ensureInit, applyDesign, focusEditor, addEditorControls } from './loader.js';
 
 // Same fx wordmark used by the CKEditor 5, TinyMCE and Froala plugins.
 export var LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 18 20">' +
@@ -22,7 +22,7 @@ var instanceCount = 0;
  *
  * Returns { open(initialLatex): Promise<{latex, output, mode} | null> }, where mode is
  * 'mathml' or 'svg' (whichever "Insert as" was set to when Ok was pressed) and output is the
- * EqEditor Output instance (for exportAs('mathml') / exportAs('url')). Resolves null if the
+ * EqEditor Output instance (for outputCode(output, 'mathml' | 'url'), in loader.js). Resolves null if the
  * user cancelled.
  */
 export function createEqnEditorDialog( config ) {
@@ -82,7 +82,7 @@ export function createEqnEditorDialog( config ) {
                     '<label class="cc-switch" title="Show or hide the LaTeX markup">' +
                         '<input type="checkbox" class="cc-eqneditor-latex-toggle">' +
                         '<span class="cc-switch-track"><span class="cc-switch-knob"></span></span>' +
-                        '<span class="cc-switch-label">LaTeX markup</span>' +
+                        '<span class="cc-switch-label">LaTeX</span>' +
                     '</label>' +
                     '<div class="cc-eqn-bar-right cc-eqneditor-modal-actions">' +
                         '<select class="cc-eqneditor-insert-mode cc-eqn-select" title="How to insert the equation">' +
@@ -145,7 +145,8 @@ export function createEqnEditorDialog( config ) {
         document.querySelector( '#' + ids.overlay + ' .cc-eqneditor-inline-toggle' )
             .addEventListener( 'change', function ( e ) { applyInline( e.target.checked ); } );
 
-        addPredictor( document.getElementById( ids.root ), design, eqTextArea, eqMathView );
+        addEditorControls( document.getElementById( ids.root ), design, { textArea: eqTextArea, mathView: eqMathView, output: eqOutput,
+            latexToggle: latexToggle, inlineToggle: document.querySelector( '#' + ids.overlay + ' .cc-eqneditor-inline-toggle' ) } );
         applyDesign( document.getElementById( ids.root ), design, latexToggle,
             document.querySelector( '#' + ids.overlay + ' .cc-eqneditor-insert-mode' ) );
     }

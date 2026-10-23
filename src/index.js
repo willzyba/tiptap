@@ -1,6 +1,6 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { createEqnEditorDialog } from './dialog.js';
-import { decodeEquation } from './loader.js';
+import { decodeEquation, outputCode } from './loader.js';
 import { domToOutputSpec } from './dom-to-output-spec.js';
 
 var DEFAULT_EDITOR_HOST = 'fxtex.codecogs.com';
@@ -185,9 +185,9 @@ export var EqnEditor = Node.create( {
 
                     var attrs = { latex: result.latex, src: null, mathml: null };
                     if ( result.mode === 'mathml' ) {
-                        attrs.mathml = result.output.exportAs( 'mathml' );
+                        attrs.mathml = outputCode( result.output, 'mathml' );
                     } else {
-                        attrs.src = result.output.exportAs( 'url' );
+                        attrs.src = outputCode( result.output, 'url' );
                     }
 
                     var pos = typeof getPos === 'function' ? getPos() : null;
@@ -232,9 +232,9 @@ export var EqnEditor = Node.create( {
 
                         var attrs = { latex: result.latex, src: null, mathml: null };
                         if ( result.mode === 'mathml' ) {
-                            attrs.mathml = result.output.exportAs( 'mathml' );
+                            attrs.mathml = outputCode( result.output, 'mathml' );
                         } else {
-                            attrs.src = result.output.exportAs( 'url' );
+                            attrs.src = outputCode( result.output, 'url' );
                         }
 
                         editor.chain().focus().insertContent( { type: name, attrs: attrs } ).run();
