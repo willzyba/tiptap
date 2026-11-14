@@ -1,8 +1,9 @@
 {
   "name": "@codecogs/fxeditor-tiptap",
   "version": "1.0.0",
-  "description": "CodeCogs Equation Editor extension for Tiptap",
+  "description": "fxEditor, CodeCogs' LaTeX equation editor, as a Tiptap extension",
   "keywords": [
+    "fxeditor",
     "tiptap",
     "tiptap-extension",
     "prosemirror",
@@ -12,7 +13,8 @@
     "mathml",
     "maths"
   ],
-  "homepage": "https://editor.codecogs.com/docs/2-plugins",
+  "homepage": "https://fxplugins.codecogs.com/docs/tiptap.html",
+  "author": "CodeCogs",
   "type": "module",
   "main": "src/index.js",
   "module": "src/index.js",
@@ -29,7 +31,6 @@
     "test": "node --experimental-vm-modules test/eqneditor.test.js",
     "start": "npx --yes http-server -o /example.html"
   },
-  "author": "CodeCogs",
   "license": "MIT",
   "peerDependencies": {
     "@tiptap/core": ">=2.0.0"
