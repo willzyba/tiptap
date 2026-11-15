@@ -14,7 +14,7 @@
     "maths"
   ],
   "homepage": "https://fxplugins.codecogs.com/docs/tiptap.html",
-  "author": "CodeCogs",
+  "author": "CodeCogs, Zyba Ltd.",
   "type": "module",
   "main": "src/index.js",
   "module": "src/index.js",

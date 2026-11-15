@@ -81,7 +81,7 @@ const editor = new Editor({
         StarterKit,
         EqnEditor.configure({
             server: 'fxtex.codecogs.com',
-            licence: 'fx_pk_your-key-here',     // from the licence manager
+            licence: 'fx_pk_your-key-here',     // from fxeditor.codecogs.com/purchase
             design: { colour: '#0f7a4d' }       // optional - see Customise and download
         })
     ]
@@ -100,11 +100,7 @@ what the author does next, not on whether the command could run.
 
 Equations are rendered by fxTeX Pro, which needs a licence key for your domain.
 
-- Get a key from https://fxeditor.codecogs.com/purchase - paid plans, and a free trial.
-- Teachers and students can get a free individual licence at
-  https://fxeditor.codecogs.com/academic.
-- Manage your keys - add domains, copy a key - in the licence manager at
-  https://fxeditor.codecogs.com/login.
+Get your licence key from https://fxeditor.codecogs.com/purchase.
 
 The key goes in the extension's `licence` option:
 
@@ -170,4 +166,8 @@ equation editor's script loaded from the network.
 
 ## Licence
 
-MIT (see `package.json`). Copyright CodeCogs (https://www.codecogs.com).
+Copyright (c) 2026 CodeCogs, Zyba Ltd.
+
+The extension is released under the MIT licence - see
+[`LICENSE`](https://github.com/willzyba/tiptap/blob/main/LICENSE). Tiptap is licensed
+separately by its own authors. fxEditor and fxTeX Pro need their own licence key, as above.
