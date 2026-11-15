@@ -1,25 +1,73 @@
-# @codecogs/fxeditor-tiptap
+# fxEditor for Tiptap
 
-[fxEditor](https://fxeditor.codecogs.com), CodeCogs' LaTeX equation editor, as a
-[Tiptap](https://tiptap.dev) node extension. Authors build an equation in a maths view or as
-LaTeX, and it goes into the document as MathML or as an image.
+The fxEditor extension for [Tiptap](https://tiptap.dev) 2, the editor framework built on
+ProseMirror. It adds an equation command to your editor that opens fxEditor, CodeCogs' equation
+editor - a toolbar of symbols and structures, a LaTeX view and a rendered maths view - in a
+dialog, and inserts the finished equation at the selection as MathML or as an SVG image.
+Double-click an inserted equation to open it in the editor again.
 
-Full documentation, a live example and a design tool:
-**[fxplugins.codecogs.com/docs/tiptap.html](https://fxplugins.codecogs.com/docs/tiptap.html)**
+Tiptap is headless: it has no toolbar of its own. So the extension does not add a button - it
+provides a command, `insertEquation()`, which you call from whatever button your interface
+already has (the example in this repository uses an **fx** button).
 
-Tiptap is headless - it has no toolbar and no dialog system, unlike CKEditor 5, TinyMCE and
-Froala. This package ships raw ESM source for your own bundler (Vite, webpack, ...) to consume,
-the same way the CKEditor 5 plugin does, and supplies its own small modal dialog (see
-[Why this extension draws its own dialog](#why-this-extension-draws-its-own-dialog)) - but the
-**toolbar button is yours to build**. The extension only exposes a command for it to call.
+This package is plain ES modules, for your own bundler (Vite, webpack, ...) or a browser import
+map. It is published on npm as `@codecogs/fxeditor-tiptap` (MIT).
 
-## Install
+## Screenshots
+
+![A Tiptap editor with an fx button in the host's toolbar, beside an inserted equation](https://raw.githubusercontent.com/willzyba/tiptap/main/screenshots/toolbar.png)
+
+*The example editor: the host's own toolbar with an **fx** button, and an inserted equation.*
+
+![The fxEditor dialog, with its symbol toolbar and maths view](https://raw.githubusercontent.com/willzyba/tiptap/main/screenshots/dialog.png)
+
+*The fxEditor dialog that `insertEquation()` opens.*
+
+## Links
+
+- Documentation and live demo: https://fxplugins.codecogs.com/docs/tiptap.html
+- Customise and download: https://fxplugins.codecogs.com/docs/tiptap.html#customise
+- All fxEditor plugins: https://fxplugins.codecogs.com
+- fxEditor: https://fxeditor.codecogs.com
+
+## Installing from git
+
+```bash
+git clone https://github.com/willzyba/tiptap.git
+```
+
+The extension needs no build step. Add it to your project from the clone, as a local package:
+
+```bash
+npm install ./path/to/tiptap
+```
+
+It has one peer dependency, `@tiptap/core` 2 or later (it is tested with 2.11.5). Then import
+and register it exactly as in [Installing from npm](#installing-from-npm) below.
+
+To try it without a project of your own, the clone has an example page, `example.html`. Replace
+its two placeholders first - `{{EQN_SERVER}}` with `fxtex.codecogs.com` and `{{FXTEXPRO_KEY}}`
+with your licence key - then:
+
+```bash
+cd tiptap
+npm install
+npm start          # serves the folder and opens example.html
+```
+
+The example loads Tiptap from a CDN through an import map, so it must be served over http(s),
+not opened as a file.
+
+## Installing from npm
+
+The package is being published to npm. Until it appears there, install it from git as above.
 
 ```bash
 npm install @codecogs/fxeditor-tiptap
 ```
 
-## Use
+Import the extension and its stylesheet, register it with your editor, and call
+`insertEquation()` from your own toolbar button:
 
 ```js
 import { Editor } from '@tiptap/core';
@@ -34,7 +82,7 @@ const editor = new Editor({
         EqnEditor.configure({
             server: 'fxtex.codecogs.com',
             licence: 'fx_pk_your-key-here',     // from the licence manager
-            design: { colour: '#0f7a4d' }       // optional
+            design: { colour: '#0f7a4d' }       // optional - see Customise and download
         })
     ]
 });
@@ -44,27 +92,50 @@ myToolbarButton.addEventListener('click', () => {
 });
 ```
 
-`insertEquation()` opens the dialog and returns immediately - like Tiptap's own file-upload
-examples, the actual insert happens later, once the user has written an equation and pressed
-Ok. It always returns `true`; whether anything landed in the document depends on what the user
-does next, not on whether the command could run.
+`insertEquation()` opens the dialog and returns straight away; the equation is inserted later,
+when the author presses OK. It always returns `true` - whether anything is inserted depends on
+what the author does next, not on whether the command could run.
 
-Double-click an existing equation to edit it again.
+## Licence key
 
-## Options
+Equations are rendered by fxTeX Pro, which needs a licence key for your domain.
+
+- Get a key from https://fxeditor.codecogs.com/purchase - paid plans, and a free trial.
+- Teachers and students can get a free individual licence at
+  https://fxeditor.codecogs.com/academic.
+- Manage your keys - add domains, copy a key - in the licence manager at
+  https://fxeditor.codecogs.com/login.
+
+The key goes in the extension's `licence` option:
+
+```js
+EqnEditor.configure({ licence: 'fx_pk_your-key-here' })
+```
+
+Without one, the editor opens but equations show why they cannot render.
+
+### Options
 
 Passed to `EqnEditor.configure({ ... })`:
 
 | Option | Default | Meaning |
 |---|---|---|
-| `server` | `'fxtex.codecogs.com'` | Where the equation editor is loaded from - or your own fxTeX Server. A bare host means https. |
-| `licence` | `''` | Your fxEditor licence key. Without one, equations show why they cannot render. |
-| `design` | `{}` | How the editor looks - toolbar, colour, sizes, the predictor. Build one with the design tool on the [documentation page](https://fxplugins.codecogs.com/docs/tiptap.html#customise). |
+| `licence` | `''` | Your fxEditor licence key. Required. |
+| `design` | `{}` | The editor's look: dialog width, height and scale, toolbar panels and size, colour, equation and markup sizes, undo/redo, how the dialog opens, and `insertAs` (`'mathml'` or `'svg'`), the dialog's starting *Insert* choice. Build one in [Customise and download](https://fxplugins.codecogs.com/docs/tiptap.html#customise). |
+| `server` | `'fxtex.codecogs.com'` | Host the equation editor is loaded from - or your own fxTeX Server. A bare host means https. |
 | `renderUrl` | `'https://latex.codecogs.com'` | The service that draws equations inserted as images. |
-| `scriptUrl` | derived from `server` | Full URL of the equation editor's script, when the default path does not suit. |
-| `cssUrl` | derived from `server` | Full URL of the equation editor's stylesheet. |
-| `mathmlCssUrl` | derived from `server` | The MathML stylesheet loaded into the editing view. |
-| `HTMLAttributes` | `{}` | Extra attributes merged onto an inserted `<img>` (MathML has no `src`/`alt` to attach them to). |
+| `scriptUrl` | from `server` | Full URL of the equation editor bundle, when the default path does not suit. |
+| `cssUrl` | from `server` | Full URL of the equation editor stylesheet. |
+| `mathmlCssUrl` | from `server` | The MathML stylesheet loaded into the editing area. |
+| `HTMLAttributes` | `{}` | Extra attributes for an inserted `<img>`, as for any Tiptap node (MathML has no `src`/`alt` to attach them to). |
+
+## What gets inserted
+
+The author chooses in the dialog: MathML (the default) or an SVG image. Either is stored as a
+Tiptap node that carries its LaTeX, so it survives `getHTML()` and `setContent()` intact and can
+be reopened by double-clicking it. See
+[`getHTML()`/`getJSON()`](https://tiptap.dev/docs/editor/api/editor) for reading the `latex`
+attribute back out, for example for search or export.
 
 ### MathML needs a stylesheet on the page that displays it
 
@@ -75,32 +146,28 @@ MathML equations needs this line - the same file fxTeX ships:
 <link rel="stylesheet" href="https://fxtex.codecogs.com/fxtex.css">
 ```
 
-The extension loads it into the editing view for you; it cannot add it to the page that
-finally displays the content, because that page is yours, not the editor's.
+The extension loads it into the editing area for you; it cannot add it to the page that finally
+displays the content, because that page is yours, not the editor's.
 
 ### Tiptap's schema and `<math>`
 
-Unlike TinyMCE, nothing needs configuring here: this extension's own node type is what
-produces the `<math>` markup, and Tiptap only ever serialises what a node's own `renderHTML`
-returns - there is no separate allow-list to update, and no way for `<math>` content to arrive
-except through this node.
+Nothing needs configuring: the extension's own node type produces the `<math>` markup, and
+Tiptap only serialises what a node's own `renderHTML` returns - there is no separate allow-list
+to update.
 
-## What gets written into the page
+### Why the extension draws its own dialog
 
-An equation goes in as MathML or as an image - the dialog's *Insert* menu, whose starting choice
-is `design.insertAs` (`'mathml'` or `'svg'`). Either can be reopened by double-clicking it, because the node's `latex` attribute always carries the source they were
-written from - see [`getHTML()`/`getJSON()`](https://tiptap.dev/docs/editor/api/editor) for how
-to read that attribute back out programmatically, e.g. for search or export.
-
-## Why this extension draws its own dialog
-
-Tiptap is headless by design, so - like the Froala plugin - this extension opens a small modal
-of its own rather than assuming any particular host UI framework. `eqneditor.css` is only that
-frame; the equation editor inside it is styled by the stylesheet loaded from `cssUrl`.
+Tiptap is headless by design, so the extension opens a small modal of its own rather than
+assuming any particular host UI framework. `eqneditor.css` is only that frame; the equation
+editor inside it is styled by the stylesheet loaded from `cssUrl`.
 
 ## Testing
 
 `npm test` runs the extension against a real Tiptap/ProseMirror instance (via `jsdom`, not a
-mock of either) and checks that `renderHTML`/`parseHTML` round-trip correctly for both images
-and MathML. It does not exercise the dialog or double-click NodeView wiring, since
-those need EqEditor's API bundle loaded from the network.
+mock of either) and checks that `renderHTML`/`parseHTML` round-trip correctly for both images and
+MathML. It does not exercise the dialog or the double-click editing, since those need the
+equation editor's script loaded from the network.
+
+## Licence
+
+MIT (see `package.json`). Copyright CodeCogs (https://www.codecogs.com).
