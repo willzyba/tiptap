@@ -3,7 +3,7 @@ import { createEqnEditorDialog } from './dialog.js';
 import { decodeEquation, outputCode } from './loader.js';
 import { domToOutputSpec } from './dom-to-output-spec.js';
 
-var DEFAULT_EDITOR_HOST = 'fxtex.codecogs.com';
+var DEFAULT_EDITOR_HOST = 'https://fxtex.codecogs.com';
 var DEFAULT_RENDER_URL = 'https://fxtex.codecogs.com';
 
 // A bare host means https; a full origin (e.g. http://localhost:8010 for local development) is used as it is.

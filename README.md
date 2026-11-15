@@ -48,7 +48,7 @@ It has one peer dependency, `@tiptap/core` 2 or later (it is tested with 2.11.5)
 and register it exactly as in [Installing from npm](#installing-from-npm) below.
 
 To try it without a project of your own, the clone has an example page, `example.html`. Replace
-its two placeholders first - `{{EQN_SERVER}}` with `fxtex.codecogs.com` and `{{FXTEXPRO_KEY}}`
+its two placeholders first - `{{EQN_SERVER}}` with `https://fxtex.codecogs.com` and `{{FXTEXPRO_KEY}}`
 with your licence key - then:
 
 ```bash
@@ -82,7 +82,7 @@ const editor = new Editor({
     extensions: [
         StarterKit,
         EqnEditor.configure({
-            server: 'fxtex.codecogs.com',
+            server: 'https://fxtex.codecogs.com',
             licence: 'fx_pk_your-key-here',     // from fxeditor.codecogs.com/purchase
             design: { colour: '#0f7a4d' }       // optional - see Customise and download
         })
@@ -120,7 +120,7 @@ Passed to `EqnEditor.configure({ ... })`:
 |---|---|---|
 | `licence` | `''` | Your fxEditor licence key. Required. |
 | `design` | `{}` | The editor's look: dialog width, height and scale, toolbar panels and size, colour, equation and markup sizes, undo/redo, how the dialog opens, and `insertAs` (`'mathml'` or `'svg'`), the dialog's starting *Insert* choice. Build one in [Customise and download](https://fxplugins.codecogs.com/docs/tiptap.html#customise). |
-| `server` | `'fxtex.codecogs.com'` | Host the equation editor is loaded from - or your own fxTeX Server. A bare host means https. |
+| `server` | `'https://fxtex.codecogs.com'` | Where the equation editor is loaded from, as a URL - or your own fxTeX Server (a bare host is taken as https). |
 | `renderUrl` | `'https://fxtex.codecogs.com'` | The service that draws equations inserted as images. |
 | `scriptUrl` | from `server` | Full URL of the equation editor bundle, when the default path does not suit. |
 | `cssUrl` | from `server` | Full URL of the equation editor stylesheet. |
