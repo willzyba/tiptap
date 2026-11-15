@@ -40,13 +40,13 @@ function check( label, actual, expected ) {
 
     editor.commands.insertContentAt( 1, {
         type: 'eqnEditorEquation',
-        attrs: { latex: 'x^2', src: 'https://latex.codecogs.com/svg.image?x%5E2' }
+        attrs: { latex: 'x^2', src: 'https://fxtex.codecogs.com/svg.image?x%5E2' }
     } );
 
     check(
         'url mode renders an <img> with the stored src and latex alt',
         editor.getHTML(),
-        '<p><img src="https://latex.codecogs.com/svg.image?x%5E2" alt="x^2"></p>'
+        '<p><img class="fxtex" src="https://fxtex.codecogs.com/svg.image?x%5E2" alt="x^2"></p>'
     );
 
     editor.destroy();
@@ -79,7 +79,7 @@ function check( label, actual, expected ) {
 {
     const editor = new Editor( {
         extensions: [ Document, Paragraph, Text, EqnEditor.configure( { insertAs: 'url' } ) ],
-        content: '<p><img src="https://latex.codecogs.com/svg.image?a%2Bb" alt="a+b"></p>'
+        content: '<p><img src="https://fxtex.codecogs.com/svg.image?a%2Bb" alt="a+b"></p>'
     } );
 
     let node = null;
@@ -88,7 +88,7 @@ function check( label, actual, expected ) {
     check( 'parseHTML recognises an existing equation <img> as our node', !!node, true );
     if ( node ) {
         check( 'parseHTML reads latex from alt', node.attrs.latex, 'a+b' );
-        check( 'parseHTML keeps the original src', node.attrs.src, 'https://latex.codecogs.com/svg.image?a%2Bb' );
+        check( 'parseHTML keeps the original src', node.attrs.src, 'https://fxtex.codecogs.com/svg.image?a%2Bb' );
     }
 
     editor.destroy();
@@ -98,7 +98,7 @@ function check( label, actual, expected ) {
 {
     const editor = new Editor( {
         extensions: [ Document, Paragraph, Text, EqnEditor.configure( { insertAs: 'url' } ) ],
-        content: '<p><img src="https://latex.codecogs.com/svg.image?a%26plus%3Bb"></p>'
+        content: '<p><img src="https://fxtex.codecogs.com/svg.image?a%26plus%3Bb"></p>'
     } );
 
     let node = null;

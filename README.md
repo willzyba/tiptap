@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/willzyba/tiptap/main/screenshots/icon.png" alt="" width="96" align="right">
+
 # fxEditor for Tiptap
 
 The fxEditor extension for [Tiptap](https://tiptap.dev) 2, the editor framework built on
@@ -119,7 +121,7 @@ Passed to `EqnEditor.configure({ ... })`:
 | `licence` | `''` | Your fxEditor licence key. Required. |
 | `design` | `{}` | The editor's look: dialog width, height and scale, toolbar panels and size, colour, equation and markup sizes, undo/redo, how the dialog opens, and `insertAs` (`'mathml'` or `'svg'`), the dialog's starting *Insert* choice. Build one in [Customise and download](https://fxplugins.codecogs.com/docs/tiptap.html#customise). |
 | `server` | `'fxtex.codecogs.com'` | Host the equation editor is loaded from - or your own fxTeX Server. A bare host means https. |
-| `renderUrl` | `'https://latex.codecogs.com'` | The service that draws equations inserted as images. |
+| `renderUrl` | `'https://fxtex.codecogs.com'` | The service that draws equations inserted as images. |
 | `scriptUrl` | from `server` | Full URL of the equation editor bundle, when the default path does not suit. |
 | `cssUrl` | from `server` | Full URL of the equation editor stylesheet. |
 | `mathmlCssUrl` | from `server` | The MathML stylesheet loaded into the editing area. |
