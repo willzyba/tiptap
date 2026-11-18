@@ -56,6 +56,19 @@ export function loadCssOnce( url ) {
     document.head.appendChild( link );
 }
 
+// fxtex.css styles inserted MathML. fxTeX Pro (which EqEditor.init() loads when the dialog
+// first opens) puts the same rules on the page itself as <style id="fxtex-style">, unless an
+// element with that id is already there - so a stylesheet added under that id replaces fxTeX
+// Pro's copy instead of doubling it.
+export function loadFxtexStyleOnce( url ) {
+    if ( document.getElementById( 'fxtex-style' ) || document.querySelector( 'link[href="' + url + '"]' ) ) return;
+    var link = document.createElement( 'link' );
+    link.id = 'fxtex-style';
+    link.rel = 'stylesheet';
+    link.href = url;
+    document.head.appendChild( link );
+}
+
 export function decodeEquation( encoded ) {
     var latex = encoded;
     try {

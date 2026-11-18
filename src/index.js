@@ -174,7 +174,7 @@ export var EqnEditor = Node.create( {
                 var dialog = createEqnEditorDialog( {
                     scriptUrl: extensionOptions.scriptUrl || ( serverOrigin( extensionOptions.server ) + '/fxeditor.api.min.js' ),
                     cssUrl: extensionOptions.cssUrl || ( serverOrigin( extensionOptions.server ) + '/fxeditor.css' ),
-                    mathmlCssUrl: extensionOptions.mathmlCssUrl || ( serverOrigin( extensionOptions.server ) + '/fxtex.css' ),
+                    mathmlCssUrl: extensionOptions.mathmlCssUrl,
                     renderUrl: extensionOptions.renderUrl,
                     licence: extensionOptions.licence,
                     design: extensionOptions.design
@@ -221,7 +221,7 @@ export var EqnEditor = Node.create( {
                     var dialog = createEqnEditorDialog( {
                         scriptUrl: extensionOptions.scriptUrl || ( serverOrigin( extensionOptions.server ) + '/fxeditor.api.min.js' ),
                         cssUrl: extensionOptions.cssUrl || ( serverOrigin( extensionOptions.server ) + '/fxeditor.css' ),
-                        mathmlCssUrl: extensionOptions.mathmlCssUrl || ( serverOrigin( extensionOptions.server ) + '/fxtex.css' ),
+                        mathmlCssUrl: extensionOptions.mathmlCssUrl,
                         renderUrl: extensionOptions.renderUrl,
                         licence: extensionOptions.licence,
                     design: extensionOptions.design

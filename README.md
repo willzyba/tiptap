@@ -124,7 +124,7 @@ Passed to `EqnEditor.configure({ ... })`:
 | `renderUrl` | `'https://fxtex.codecogs.com'` | The service that draws equations inserted as images. |
 | `scriptUrl` | from `server` | Full URL of the equation editor bundle, when the default path does not suit. |
 | `cssUrl` | from `server` | Full URL of the equation editor stylesheet. |
-| `mathmlCssUrl` | from `server` | The MathML stylesheet loaded into the editing area. |
+| `mathmlCssUrl` | none | A MathML stylesheet to use in place of the copy of `fxtex.css` that fxTeX Pro adds when the dialog opens. Nothing is loaded unless you set it. |
 | `HTMLAttributes` | `{}` | Extra attributes for an inserted `<img>`, as for any Tiptap node (MathML has no `src`/`alt` to attach them to). |
 
 ## What gets inserted
@@ -141,11 +141,16 @@ Browsers' own MathML does not cover everything the converter produces, so a page
 MathML equations needs this line - the same file fxTeX ships:
 
 ```html
-<link rel="stylesheet" href="https://fxtex.codecogs.com/fxtex.css">
+<link id="fxtex-style" rel="stylesheet" href="https://fxtex.codecogs.com/fxtex.css">
 ```
 
-The extension loads it into the editing area for you; it cannot add it to the page that finally
-displays the content, because that page is yours, not the editor's.
+The `id` is the one fxTeX Pro looks for: on a page that also runs the editor, fxTeX Pro sees
+the rules are already there and does not add a second copy.
+
+In the editing area the rules come from fxTeX Pro, which the dialog loads and which adds them to
+the page as `<style id="fxtex-style">`; the extension does not load the file as well. It cannot
+add it to the page that finally displays the content, because that page is yours, not the
+editor's.
 
 ### Tiptap's schema and `<math>`
 

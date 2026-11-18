@@ -1,4 +1,4 @@
-import { loadScriptOnce, loadCssOnce, injectStyleOverridesOnce, ensureInit, applyDesign, focusEditor, addEditorControls } from './loader.js';
+import { loadScriptOnce, loadCssOnce, loadFxtexStyleOnce, injectStyleOverridesOnce, ensureInit, applyDesign, focusEditor, addEditorControls } from './loader.js';
 
 // Same fx wordmark used by the CKEditor 5, TinyMCE and Froala plugins.
 export var LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 18 20">' +
@@ -40,7 +40,10 @@ export function createEqnEditorDialog( config ) {
     var design = config.design || {};
     var apiReady = loadScriptOnce( config.scriptUrl );
     loadCssOnce( config.cssUrl );
-    loadCssOnce( config.mathmlCssUrl );
+    // No fxtex.css by default: the dialog is the first thing to need it, and opening it loads
+    // fxTeX Pro, which adds those rules to the page itself. A mathmlCssUrl set by the integrator
+    // is still loaded, under fxTeX Pro's own id, so it is used in place of fxTeX Pro's copy.
+    if ( config.mathmlCssUrl ) loadFxtexStyleOnce( config.mathmlCssUrl );
 
     var overlay = null;
     var eqOutput = null, eqTextArea = null, eqMathView = null, eqToolbar = null;
