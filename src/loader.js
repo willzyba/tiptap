@@ -250,7 +250,8 @@ export function applyDesign( root, design, latexToggle, insertSelect ) {
             box.style.setProperty( 'max-width', 'calc(96vw / ' + size + ')', 'important' );   // still no wider than the window
         }
     }
-    if ( insertSelect && design.insertAs && insertSelect.querySelector( 'option[value="' + design.insertAs + '"]' ) ) {
+    // The design's choice, unless the author has made their own (addEditorControls()).
+    if ( insertSelect && design.insertAs && !insertSelect.hasAttribute( 'data-cc-remembered' ) && insertSelect.querySelector( 'option[value="' + design.insertAs + '"]' ) ) {
         insertSelect.value = design.insertAs;
     }
     if ( latexToggle && design.latex && !latexToggle.checked && !latexToggle.disabled ) {
@@ -354,6 +355,16 @@ export function addEditorControls( root, design, parts ) {
             latex.dispatchEvent( new Event( 'change', { bubbles: true } ) );
         }
         latex.addEventListener( 'change', function () { prefs.latex = latex.checked; save(); } );
+    }
+
+    // Insert as: the author's last choice, over the design's.
+    var insertAs = parts.insertSelect;
+    if ( insertAs ) {
+        if ( prefs.insertAs && insertAs.querySelector( 'option[value="' + prefs.insertAs + '"]' ) ) {
+            insertAs.value = prefs.insertAs;
+            insertAs.setAttribute( 'data-cc-remembered', '' );
+        }
+        insertAs.addEventListener( 'change', function () { prefs.insertAs = insertAs.value; save(); } );
     }
 
     stackPanes( root, prefs, save );

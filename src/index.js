@@ -180,7 +180,7 @@ export var EqnEditor = Node.create( {
                     design: extensionOptions.design
                 } );
 
-                dialog.open( node.attrs.latex ).then( function ( result ) {
+                dialog.open( node.attrs.latex, node.attrs.mathml ? 'mathml' : 'svg' ).then( function ( result ) {
                     if ( !result ) return;
 
                     var attrs = { latex: result.latex, src: null, mathml: null };

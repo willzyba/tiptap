@@ -149,13 +149,16 @@ export function createEqnEditorDialog( config ) {
             .addEventListener( 'change', function ( e ) { applyInline( e.target.checked ); } );
 
         addEditorControls( document.getElementById( ids.root ), design, { textArea: eqTextArea, mathView: eqMathView, output: eqOutput,
-            latexToggle: latexToggle, inlineToggle: document.querySelector( '#' + ids.overlay + ' .cc-eqneditor-inline-toggle' ) } );
+            latexToggle: latexToggle, inlineToggle: document.querySelector( '#' + ids.overlay + ' .cc-eqneditor-inline-toggle' ),
+            insertSelect: document.querySelector( '#' + ids.overlay + ' .cc-eqneditor-insert-mode' ) } );
         applyDesign( document.getElementById( ids.root ), design, latexToggle,
             document.querySelector( '#' + ids.overlay + ' .cc-eqneditor-insert-mode' ) );
     }
 
     return {
-        open: function ( initialLatex ) {
+        // `format` ('svg' or 'mathml'), when editing: what the equation was inserted as, which the
+        // dialog starts with, so an edited equation goes back in the form it came out of.
+        open: function ( initialLatex, format ) {
             return new Promise( function ( resolve ) {
                 if ( !overlay ) overlay = createOverlay();
                 overlay.classList.add( 'cc-eqneditor-open' );
@@ -181,6 +184,8 @@ export function createEqnEditorDialog( config ) {
                 apiReady.then( function () { return ensureInit( config.licence ); } ).then( function () {
                     injectStyleOverridesOnce( config.cssUrl.slice( 0, config.cssUrl.lastIndexOf( '/' ) + 1 ) + 'prototypes/latinmodern-math.otf' );
                     mount();
+                    var insertMode = overlay.querySelector( '.cc-eqneditor-insert-mode' );
+                    if ( format && insertMode && insertMode.querySelector( 'option[value="' + format + '"]' ) ) insertMode.value = format;
                     eqTextArea.clear();
                     if ( initialLatex ) eqTextArea.insert( initialLatex, initialLatex.length );
                     eqTextArea.notifyOutputs();
