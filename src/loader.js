@@ -36,12 +36,14 @@ export function loadScriptOnce( url ) {
 // to fxTeX Pro - skip it and they keep the placeholder converter for their whole lifetime, even
 // once fxeditor.api.min.js itself has loaded. Called once per page; an empty licence is the
 // normal, expected state until a real one is configured.
+// fxTeX Pro's optional packages are off unless named here: without them \ce, \chemfig,
+// \dv and the picture environment were unknown commands, shown as their letters.
 var initPromise = null;
 
 export function ensureInit( licence ) {
     if ( initPromise ) return initPromise;
     initPromise = ( typeof window !== 'undefined' && typeof window.EqEditor !== 'undefined' && typeof window.EqEditor.init === 'function' )
-        ? window.EqEditor.init( { licence: licence || '' } ).catch( function ( err ) {
+        ? window.EqEditor.init( { licence: licence || '', packages: [ 'mhchem', 'chemfig', 'physics', 'picture' ] } ).catch( function ( err ) {
             window.console && console.warn( 'fxTeX Pro: ' + ( err && err.message || err ) );
         } )
         : Promise.resolve();
@@ -77,6 +79,52 @@ export function decodeEquation( encoded ) {
         // Not valid percent-encoding; still worth showing as it stands.
     }
     return latex.replace( /&space;/g, ' ' ).replace( /&plus;/g, '+' ).replace( /&hash;/g, '#' );
+}
+
+// "Insert as LaTeX": the equation as text fxTeX Pro typesets where the page is shown - $...$
+// inline, $$...$$ on its own line - the delimiters fxTeX Pro looks for by default.
+export function texOf( latex, inline ) {
+    return inline ? '$' + latex + '$' : '$$' + latex + '$$';
+}
+
+// The $...$ or $$...$$ in `text` that `offset` is in or at the edge of, read as fxTeX Pro reads
+// it: $$ opens a display equation and a single $ an inline one, each closed by the same, and
+// \$ is a dollar sign, not a delimiter. Returns { start, end, latex, display }, or null.
+export function texAround( text, offset ) {
+    var i = 0;
+    while ( i < text.length ) {
+        var c = text.charAt( i );
+        if ( c === '\\' ) { i += 2; continue; }
+        if ( c !== '$' ) { i++; continue; }
+        var display = text.charAt( i + 1 ) === '$', size = display ? 2 : 1, j = i + size;
+        while ( j < text.length && !( text.charAt( j ) === '$' && ( !display || text.charAt( j + 1 ) === '$' ) ) ) {
+            j += text.charAt( j ) === '\\' ? 2 : 1;
+        }
+        if ( j >= text.length ) return null;
+        var end = j + size;
+        if ( offset >= i && offset <= end ) {
+            var latex = text.slice( i + size, j ).trim();
+            return latex ? { start: i, end: end, latex: latex, display: display } : null;
+        }
+        i = end;
+    }
+    return null;
+}
+
+// The Inline switch as the dialog opens: an edited LaTeX equation's own form ($ inline, $$
+// not), otherwise what the author last chose. Set without a change event, so editing one
+// equation does not change the remembered choice; `apply` shows the change in the dialog.
+export function startInline( toggle, inline, apply ) {
+    if ( !toggle || toggle.disabled ) return;
+    if ( typeof inline !== 'boolean' ) {
+        var prefs = {};
+        try { prefs = JSON.parse( localStorage.getItem( EDITOR_PREFS_KEY ) ) || {}; } catch ( e ) {}
+        inline = typeof prefs.inline === 'boolean' ? prefs.inline : toggle.defaultChecked;
+    }
+    if ( toggle.checked !== inline ) {
+        toggle.checked = inline;
+        apply( inline );
+    }
 }
 
 export function escapeHtml( s ) {

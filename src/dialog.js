@@ -1,4 +1,4 @@
-import { loadScriptOnce, loadCssOnce, loadFxtexStyleOnce, injectStyleOverridesOnce, ensureInit, applyDesign, focusEditor, addEditorControls } from './loader.js';
+import { loadScriptOnce, loadCssOnce, loadFxtexStyleOnce, injectStyleOverridesOnce, ensureInit, applyDesign, focusEditor, addEditorControls, startInline } from './loader.js';
 
 // Same fx wordmark used by the CKEditor 5, TinyMCE and Froala plugins.
 export var LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 18 20">' +
@@ -18,12 +18,13 @@ var instanceCount = 0;
  * The dialog is maths-view only: no LaTeX markup and no rendered-equation preview are visible
  * until asked for (the LaTeX and Inline toggles, bottom-left of the footer). "Insert as", next
  * to them, chooses what open()'s resolved value describes - MathML the editor produces
- * directly, or an <img> against the SVG rendering service.
+ * directly, an <img> against the SVG rendering service, or the LaTeX itself as text.
  *
- * Returns { open(initialLatex): Promise<{latex, output, mode} | null> }, where mode is
- * 'mathml' or 'svg' (whichever "Insert as" was set to when Ok was pressed) and output is the
- * EqEditor Output instance (for outputCode(output, 'mathml' | 'url'), in loader.js). Resolves null if the
- * user cancelled.
+ * Returns { open(initialLatex, format, inline): Promise<{latex, output, mode, inline} | null> },
+ * where mode is 'mathml', 'svg' or 'latex' (whichever "Insert as" was set to when Ok was
+ * pressed), inline is whether the Inline switch was on, and output is the EqEditor Output
+ * instance (for outputCode(output, 'mathml' | 'url'), in loader.js). Resolves null if the user
+ * cancelled.
  */
 export function createEqnEditorDialog( config ) {
     var n = ++instanceCount;
@@ -91,6 +92,7 @@ export function createEqnEditorDialog( config ) {
                         '<select class="cc-eqneditor-insert-mode cc-eqn-select" title="How to insert the equation">' +
                             '<option value="mathml" selected>Insert MathML</option>' +
                             '<option value="svg">Insert SVG</option>' +
+                            '<option value="latex">Insert LaTeX</option>' +
                         '</select>' +
                         '<button type="button" class="cc-eqn-btn cc-eqneditor-modal-cancel">Cancel</button>' +
                         '<button type="button" class="cc-eqn-btn cc-eqn-primary cc-eqneditor-modal-ok">OK</button>' +
@@ -156,9 +158,10 @@ export function createEqnEditorDialog( config ) {
     }
 
     return {
-        // `format` ('svg' or 'mathml'), when editing: what the equation was inserted as, which the
-        // dialog starts with, so an edited equation goes back in the form it came out of.
-        open: function ( initialLatex, format ) {
+        // `format` ('svg', 'mathml' or 'latex'), when editing: what the equation was inserted as, which
+        // the dialog starts with, so an edited equation goes back in the form it came out of.
+        // `inline`: whether it is an inline equation ($...$, for LaTeX), which the Inline switch starts at.
+        open: function ( initialLatex, format, inline ) {
             return new Promise( function ( resolve ) {
                 if ( !overlay ) overlay = createOverlay();
                 overlay.classList.add( 'cc-eqneditor-open' );
@@ -176,7 +179,8 @@ export function createEqnEditorDialog( config ) {
 
                 okBtn.onclick = function () {
                     var current = eqTextArea ? eqTextArea.getTextArea().textContent.trim() : '';
-                    finish( current ? { latex: current, output: eqOutput, mode: modeSelect.value } : null );
+                    var inlineToggle = overlay.querySelector( '.cc-eqneditor-inline-toggle' );
+                    finish( current ? { latex: current, output: eqOutput, mode: modeSelect.value, inline: !!( inlineToggle && inlineToggle.checked ) } : null );
                 };
                 cancelBtn.onclick = function () { finish( null ); };
                 closeBtn.onclick = function () { finish( null ); };
@@ -186,6 +190,7 @@ export function createEqnEditorDialog( config ) {
                     mount();
                     var insertMode = overlay.querySelector( '.cc-eqneditor-insert-mode' );
                     if ( format && insertMode && insertMode.querySelector( 'option[value="' + format + '"]' ) ) insertMode.value = format;
+                    startInline( overlay.querySelector( '.cc-eqneditor-inline-toggle' ), inline, applyInline );
                     eqTextArea.clear();
                     if ( initialLatex ) eqTextArea.insert( initialLatex, initialLatex.length );
                     eqTextArea.notifyOutputs();

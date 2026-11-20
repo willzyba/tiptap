@@ -5,7 +5,7 @@
 The fxEditor extension for [Tiptap](https://tiptap.dev) 2, the editor framework built on
 ProseMirror. It adds an equation command to your editor that opens fxEditor, CodeCogs' equation
 editor - a toolbar of symbols and structures, a LaTeX view and a rendered maths view - in a
-dialog, and inserts the finished equation at the selection as MathML or as an SVG image.
+dialog, and inserts the finished equation at the selection as MathML, as an SVG image, or as LaTeX text (`$...$` inline, `$$...$$` on its own line) for [fxTeX](https://fxeditor.codecogs.com/docs/0-fxtex.php) to typeset on the page that shows it.
 Double-click an inserted equation to open it in the editor again.
 
 Tiptap is headless: it has no toolbar of its own. So the extension does not add a button - it
@@ -119,7 +119,7 @@ Passed to `EqnEditor.configure({ ... })`:
 | Option | Default | Meaning |
 |---|---|---|
 | `licence` | `''` | Your fxEditor licence key. Required. |
-| `design` | `{}` | The editor's look: dialog width, height and scale, toolbar panels and size, colour, equation and markup sizes, undo/redo, how the dialog opens, and `insertAs` (`'mathml'` or `'svg'`), the dialog's starting *Insert* choice. Build one in [Customise and download](https://fxplugins.codecogs.com/docs/tiptap.html#customise). |
+| `design` | `{}` | The editor's look: dialog width, height and scale, toolbar panels and size, colour, equation and markup sizes, undo/redo, how the dialog opens, and `insertAs` (`'mathml'`, `'svg'` or `'latex'`), the dialog's starting *Insert* choice. Build one in [Customise and download](https://fxplugins.codecogs.com/docs/tiptap.html#customise). |
 | `server` | `'https://fxtex.codecogs.com'` | Where the equation editor is loaded from, as a URL - or your own fxTeX Server (a bare host is taken as https). |
 | `renderUrl` | `'https://fxtex.codecogs.com'` | The service that draws equations inserted as images. |
 | `scriptUrl` | from `server` | Full URL of the equation editor bundle, when the default path does not suit. |
@@ -129,7 +129,9 @@ Passed to `EqnEditor.configure({ ... })`:
 
 ## What gets inserted
 
-The author chooses in the dialog: MathML (the default) or an SVG image. Either is stored as a
+The author chooses in the dialog: MathML (the default), an SVG image, or the LaTeX as text
+(`$...$` inline, `$$...$$` not), which a page needs [fxTeX](https://fxeditor.codecogs.com/docs/0-fxtex.php)
+to typeset. MathML and SVG are stored as a
 Tiptap node that carries its LaTeX, so it survives `getHTML()` and `setContent()` intact and can
 be reopened by double-clicking it. See
 [`getHTML()`/`getJSON()`](https://tiptap.dev/docs/editor/api/editor) for reading the `latex`

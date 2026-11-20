@@ -1,6 +1,6 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { createEqnEditorDialog } from './dialog.js';
-import { decodeEquation, outputCode } from './loader.js';
+import { decodeEquation, outputCode, texOf, texAround } from './loader.js';
 import { domToOutputSpec } from './dom-to-output-spec.js';
 
 var DEFAULT_EDITOR_HOST = 'https://fxtex.codecogs.com';
@@ -9,6 +9,38 @@ var DEFAULT_RENDER_URL = 'https://fxtex.codecogs.com';
 // A bare host means https; a full origin (e.g. http://localhost:8010 for local development) is used as it is.
 function serverOrigin( host ) {
     return /^https?:\/\//.test( host ) ? host.replace( /\/+$/, '' ) : 'https://' + host;
+}
+
+// The dialog, set up from the extension's options.
+function dialogFor( options ) {
+    return createEqnEditorDialog( {
+        scriptUrl: options.scriptUrl || ( serverOrigin( options.server ) + '/fxeditor.api.min.js' ),
+        cssUrl: options.cssUrl || ( serverOrigin( options.server ) + '/fxeditor.css' ),
+        mathmlCssUrl: options.mathmlCssUrl,
+        renderUrl: options.renderUrl,
+        licence: options.licence,
+        design: options.design
+    } );
+}
+
+// What the dialog's result puts in the document: for "Insert as LaTeX", the LaTeX as text fxTeX
+// Pro typesets where the page is shown ($...$ inline, $$...$$ not); otherwise an equation node.
+function contentOf( result, type ) {
+    if ( result.mode === 'latex' ) return type.schema.text( texOf( result.latex, result.inline ) );
+    var attrs = { latex: result.latex, src: null, mathml: null };
+    if ( result.mode === 'mathml' ) attrs.mathml = outputCode( result.output, 'mathml' );
+    else attrs.src = outputCode( result.output, 'url' );
+    return type.create( attrs );
+}
+
+// Puts the dialog's result in place of from-to, as one step. Text keeps the marks (bold and so on)
+// of what it replaces.
+function replaceWith( editor, from, to, result, type ) {
+    var state = editor.view.state;
+    var content = contentOf( result, type );
+    var tr = content.isText ? state.tr.insertText( content.text, from, to ) : state.tr.replaceWith( from, to, content );
+    editor.view.dispatch( tr );
+    editor.commands.focus();
 }
 
 /**
@@ -171,29 +203,17 @@ export var EqnEditor = Node.create( {
             render( node );
 
             dom.addEventListener( 'dblclick', function () {
-                var dialog = createEqnEditorDialog( {
-                    scriptUrl: extensionOptions.scriptUrl || ( serverOrigin( extensionOptions.server ) + '/fxeditor.api.min.js' ),
-                    cssUrl: extensionOptions.cssUrl || ( serverOrigin( extensionOptions.server ) + '/fxeditor.css' ),
-                    mathmlCssUrl: extensionOptions.mathmlCssUrl,
-                    renderUrl: extensionOptions.renderUrl,
-                    licence: extensionOptions.licence,
-                    design: extensionOptions.design
-                } );
-
-                dialog.open( node.attrs.latex, node.attrs.mathml ? 'mathml' : 'svg' ).then( function ( result ) {
+                // Inline or not, as it was: an inline image's URL starts its LaTeX with \inline, and
+                // MathML not inline has no display="block".
+                var inline = node.attrs.mathml ? !/<math\b[^>]*\sdisplay="block"/.test( node.attrs.mathml )
+                    : /\.image\?(\\|%5C)inline\b/i.test( node.attrs.src || '' );
+                dialogFor( extensionOptions ).open( node.attrs.latex, node.attrs.mathml ? 'mathml' : 'svg', inline ).then( function ( result ) {
                     if ( !result ) return;
 
-                    var attrs = { latex: result.latex, src: null, mathml: null };
-                    if ( result.mode === 'mathml' ) {
-                        attrs.mathml = outputCode( result.output, 'mathml' );
-                    } else {
-                        attrs.src = outputCode( result.output, 'url' );
-                    }
-
                     var pos = typeof getPos === 'function' ? getPos() : null;
-                    if ( pos === null ) return;
+                    if ( pos === null || pos === undefined ) return;
 
-                    editor.view.dispatch( editor.view.state.tr.setNodeMarkup( pos, undefined, attrs ) );
+                    replaceWith( editor, pos, pos + node.nodeSize, result, node.type );
                 } );
             } );
 
@@ -209,6 +229,55 @@ export var EqnEditor = Node.create( {
         };
     },
 
+    addStorage: function () {
+        return { onDoubleClick: null };
+    },
+
+    // Double-click LaTeX in the text, as "Insert as LaTeX" puts it, to edit it: the $...$ or
+    // $$...$$ round where the double-click landed is the equation, and OK replaces it.
+    onCreate: function () {
+        var editor = this.editor;
+        var options = this.options;
+        var type = editor.schema.nodes[ this.name ];
+
+        this.storage.onDoubleClick = function ( e ) {
+            if ( e.target && e.target.closest && e.target.closest( '.cc-eqneditor-node' ) ) return;
+            var view = editor.view;
+            var at = view.posAtCoords( { left: e.clientX, top: e.clientY } );
+            if ( !at ) return;
+            var $pos = view.state.doc.resolve( at.pos );
+            var block = $pos.parent;
+            if ( !block.isTextblock ) return;
+            // An equation node, or anything else that is not text, counts as one character, as
+            // it takes one place in the document.
+            var text = block.textBetween( 0, block.content.size, null, '\ufffc' );
+            var found = texAround( text, $pos.parentOffset );
+            if ( !found ) return;
+
+            var from = $pos.start() + found.start, to = $pos.start() + found.end;
+            var was = text.slice( found.start, found.end );
+            e.preventDefault();
+            // The word the double-click selected is in this page, as the dialog is: left selected,
+            // the dialog's own editing area put the equation into it, not itself.
+            var selection = view.dom.ownerDocument.getSelection();
+            if ( selection ) selection.removeAllRanges();
+
+            dialogFor( options ).open( found.latex, 'latex', !found.display ).then( function ( result ) {
+                if ( !result ) return;
+                // Not if the text has changed under it since.
+                if ( to > editor.state.doc.content.size || editor.state.doc.textBetween( from, to, null, '\ufffc' ) !== was ) return;
+                replaceWith( editor, from, to, result, type );
+            } );
+        };
+        editor.view.dom.addEventListener( 'dblclick', this.storage.onDoubleClick );
+    },
+
+    onDestroy: function () {
+        if ( this.storage.onDoubleClick && this.editor.view && this.editor.view.dom ) {
+            this.editor.view.dom.removeEventListener( 'dblclick', this.storage.onDoubleClick );
+        }
+    },
+
     addCommands: function () {
         var extensionOptions = this.options;
         var name = this.name;
@@ -218,26 +287,14 @@ export var EqnEditor = Node.create( {
                 return function ( props ) {
                     var editor = props.editor;
 
-                    var dialog = createEqnEditorDialog( {
-                        scriptUrl: extensionOptions.scriptUrl || ( serverOrigin( extensionOptions.server ) + '/fxeditor.api.min.js' ),
-                        cssUrl: extensionOptions.cssUrl || ( serverOrigin( extensionOptions.server ) + '/fxeditor.css' ),
-                        mathmlCssUrl: extensionOptions.mathmlCssUrl,
-                        renderUrl: extensionOptions.renderUrl,
-                        licence: extensionOptions.licence,
-                    design: extensionOptions.design
-                    } );
-
-                    dialog.open( '' ).then( function ( result ) {
+                    dialogFor( extensionOptions ).open( '' ).then( function ( result ) {
                         if ( !result ) return;
 
-                        var attrs = { latex: result.latex, src: null, mathml: null };
-                        if ( result.mode === 'mathml' ) {
-                            attrs.mathml = outputCode( result.output, 'mathml' );
+                        if ( result.mode === 'latex' ) {
+                            editor.chain().focus().insertContent( { type: 'text', text: texOf( result.latex, result.inline ) } ).run();
                         } else {
-                            attrs.src = outputCode( result.output, 'url' );
+                            editor.chain().focus().insertContent( contentOf( result, editor.schema.nodes[ name ] ).toJSON() ).run();
                         }
-
-                        editor.chain().focus().insertContent( { type: name, attrs: attrs } ).run();
                     } );
 
                     // Handled synchronously; the insert itself happens later, once the user
