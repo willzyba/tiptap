@@ -7,6 +7,7 @@ ProseMirror. It adds an equation command to your editor that opens fxEditor, Cod
 editor - a toolbar of symbols and structures, a LaTeX view and a rendered maths view - in a
 dialog, and inserts the finished equation at the selection as MathML, as an SVG image, or as LaTeX text (`$...$` inline, `$$...$$` on its own line) for [fxTeX](https://fxeditor.codecogs.com/docs/0-fxtex.php) to typeset on the page that shows it.
 Double-click an inserted equation to open it in the editor again.
+LaTeX in the content shows as the maths it is while it is edited, and is saved as the LaTeX, character for character (`latexAsMaths: false` in the design turns this off).
 
 Tiptap is headless: it has no toolbar of its own. So the extension does not add a button - it
 provides a command, `insertEquation()`, which you call from whatever button your interface

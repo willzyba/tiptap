@@ -1,6 +1,8 @@
 import { Node, mergeAttributes } from '@tiptap/core';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { createEqnEditorDialog } from './dialog.js';
-import { decodeEquation, outputCode, texOf, texAround } from './loader.js';
+import { decodeEquation, outputCode, texOf, texAround, texPieces, injectTexStylesOnce, loadScriptOnce, ensureInit } from './loader.js';
 import { domToOutputSpec } from './dom-to-output-spec.js';
 
 var DEFAULT_EDITOR_HOST = 'https://fxtex.codecogs.com';
@@ -41,6 +43,91 @@ function replaceWith( editor, from, to, result, type ) {
     var tr = content.isText ? state.tr.insertText( content.text, from, to ) : state.tr.replaceWith( from, to, content );
     editor.view.dispatch( tr );
     editor.commands.focus();
+}
+
+var TEX_KEY = new PluginKey( 'ccTexAsMaths' );
+
+/**
+ * LaTeX in the text - $...$ and $$...$$, as fxTeX reads them on the page that shows the content -
+ * shown as the maths it is while it is edited (design.latexAsMaths, on unless set false). The
+ * document is not touched: the maths is a decoration drawn in place of the LaTeX, which stays in
+ * the document as text and is what getHTML() gives. Put the cursor inside one (the arrow keys
+ * reach it) and its LaTeX shows instead, to edit by hand; double-click it for the equation editor.
+ */
+function texAsMathsPlugin( options ) {
+    var ready = false, starting = false, cache = {};
+
+    function mathmlOf( tex ) {
+        var key = ( tex.display ? 'D' : 'I' ) + tex.latex;
+        if ( !( key in cache ) ) {
+            var mathml = '';
+            try { mathml = EqEditor.Output.latexToMathML( tex.latex, true, !tex.display ); } catch ( e ) { mathml = ''; }
+            // Without fxTeX Pro (no licence), its error: the LaTeX is shown instead.
+            cache[ key ] = mathml && mathml.indexOf( '<merror' ) === -1 ? mathml : '';
+        }
+        return cache[ key ];
+    }
+
+    // fxTeX Pro is loaded when there is first LaTeX to show, and the decorations drawn again then.
+    function start( view ) {
+        if ( starting ) return;
+        starting = true;
+        var scriptUrl = options.scriptUrl || ( serverOrigin( options.server ) + '/fxeditor.api.min.js' );
+        loadScriptOnce( scriptUrl ).then( function () { return ensureInit( options.licence ); } ).then( function () {
+            ready = true;
+            if ( !view.isDestroyed ) view.dispatch( view.state.tr.setMeta( TEX_KEY, 'ready' ) );
+        } ).catch( function () {} );
+    }
+
+    return new Plugin( {
+        key: TEX_KEY,
+        view: function ( view ) {
+            injectTexStylesOnce();
+            if ( view.state.doc.textContent.indexOf( '$' ) !== -1 ) start( view );
+            return {
+                update: function ( view ) {
+                    if ( !starting && view.state.doc.textContent.indexOf( '$' ) !== -1 ) start( view );
+                }
+            };
+        },
+        props: {
+            decorations: function ( state ) {
+                if ( !ready ) return null;
+                var decorations = [], selection = state.selection;
+                var codeMark = state.schema.marks.code;
+                state.doc.descendants( function ( node, pos ) {
+                    if ( !node.isTextblock ) return true;
+                    if ( node.type.spec.code ) return false;
+                    // An equation node or anything else not text takes one place, as in the document.
+                    var text = node.textBetween( 0, node.content.size, null, '\ufffc' );
+                    if ( text.indexOf( '$' ) === -1 ) return false;
+                    var at = pos + 1;
+                    texPieces( text ).forEach( function ( piece ) {
+                        var from = at, to = at + piece.text.length;
+                        at = to;
+                        if ( !piece.tex ) return;
+                        // Being edited by hand - the cursor or selection inside it: its LaTeX shows.
+                        if ( selection.from < to && selection.to > from &&
+                            !( selection.empty && ( selection.from === from || selection.from === to ) ) ) return;
+                        if ( codeMark && state.doc.rangeHasMark( from, to, codeMark ) ) return;
+                        var mathml = mathmlOf( piece.tex );
+                        if ( !mathml ) return;
+                        var display = piece.tex.display;
+                        decorations.push( Decoration.widget( from, function () {
+                            var span = document.createElement( 'span' );
+                            span.className = display ? 'cc-tex cc-tex-display' : 'cc-tex';
+                            span.setAttribute( 'contenteditable', 'false' );
+                            span.innerHTML = mathml;
+                            return span;
+                        }, { side: -1, key: 'cc-tex:' + piece.text, ignoreSelection: true } ) );
+                        decorations.push( Decoration.inline( from, to, { class: 'cc-tex-source' } ) );
+                    } );
+                    return false;
+                } );
+                return DecorationSet.create( state.doc, decorations );
+            }
+        }
+    } );
 }
 
 /**
@@ -227,6 +314,11 @@ export var EqnEditor = Node.create( {
                 }
             };
         };
+    },
+
+    addProseMirrorPlugins: function () {
+        var design = this.options.design || {};
+        return design.latexAsMaths === false ? [] : [ texAsMathsPlugin( this.options ) ];
     },
 
     addStorage: function () {

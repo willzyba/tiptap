@@ -127,6 +127,51 @@ export function startInline( toggle, inline, apply ) {
     }
 }
 
+// A piece of text as runs of plain text and LaTeX equations, read as texAround() reads them:
+// [{ text }, { text, tex: { latex, display } }, ...] - each run's text exactly as it is in the piece,
+// delimiters and all, so joining the runs gives the piece back unchanged.
+export function texPieces( text ) {
+    var pieces = [], i = 0, from = 0;
+    while ( i < text.length ) {
+        var c = text.charAt( i );
+        if ( c === '\\' ) { i += 2; continue; }
+        if ( c !== '$' ) { i++; continue; }
+        var display = text.charAt( i + 1 ) === '$', size = display ? 2 : 1, j = i + size;
+        while ( j < text.length && !( text.charAt( j ) === '$' && ( !display || text.charAt( j + 1 ) === '$' ) ) ) {
+            j += text.charAt( j ) === '\\' ? 2 : 1;
+        }
+        if ( j >= text.length ) break;
+        var end = j + size, latex = text.slice( i + size, j ).trim();
+        if ( latex ) {
+            if ( i > from ) pieces.push( { text: text.slice( from, i ) } );
+            pieces.push( { text: text.slice( i, end ), tex: { latex: latex, display: display } } );
+            from = end;
+        }
+        i = end;
+    }
+    if ( from < text.length ) pieces.push( { text: text.slice( from ) } );
+    return pieces;
+}
+
+// The LaTeX equation in `source` (all of it, delimiters and all, as texPieces() gives it), or null.
+export function texOfSource( source ) {
+    var pieces = texPieces( source || '' );
+    return pieces.length === 1 && pieces[ 0 ].tex ? pieces[ 0 ].tex : null;
+}
+
+// How LaTeX shown as maths sits in the editing area: a display equation ($$...$$) on a line of its
+// own, as fxTeX puts it on the page that shows the content; each one a single thing to click.
+var texStylesInjected = false;
+export function injectTexStylesOnce() {
+    if ( texStylesInjected || typeof document === 'undefined' ) return;
+    texStylesInjected = true;
+    var style = document.createElement( 'style' );
+    style.textContent = '.cc-tex { cursor: default; } .cc-tex-display { display: block; text-align: center; margin: 0.5em 0; }' +
+        // The LaTeX the maths stands for (Tiptap): still in the document, out of sight.
+        ' .cc-tex-source { display: inline-block; position: absolute; width: 0; height: 0; overflow: hidden; opacity: 0; }';
+    document.head.appendChild( style );
+}
+
 export function escapeHtml( s ) {
     return String( s )
         .replace( /&/g, '&amp;' ).replace( /</g, '&lt;' )
