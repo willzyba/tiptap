@@ -1,4 +1,5 @@
-import { loadScriptOnce, loadCssOnce, loadFxtexStyleOnce, injectStyleOverridesOnce, ensureInit, applyDesign, focusEditor, addEditorControls, startInline } from './loader.js';
+import { loadScriptOnce, loadCssOnce, loadFxtexStyleOnce, injectStyleOverridesOnce, ensureInit, applyDesign, focusEditor, addEditorControls, startInline,
+    isImageFormat, imageSizeIn, imagePxSize } from './loader.js';
 
 // Same fx wordmark used by the CKEditor 5, TinyMCE and Froala plugins.
 export var LOGO_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="20" viewBox="0 0 18 20">' +
@@ -20,11 +21,13 @@ var instanceCount = 0;
  * to them, chooses what open()'s resolved value describes - MathML the editor produces
  * directly, an <img> against the SVG rendering service, or the LaTeX itself as text.
  *
- * Returns { open(initialLatex, format, inline): Promise<{latex, output, mode, inline} | null> },
+ * Returns { open(initialLatex, format, inline, px): Promise<{latex, output, mode, inline, size} | null> },
  * where mode is 'mathml', 'svg' or 'latex' (whichever "Insert as" was set to when Ok was
- * pressed), inline is whether the Inline switch was on, and output is the EqEditor Output
- * instance (for outputCode(output, 'mathml' | 'url'), in loader.js). Resolves null if the user
- * cancelled.
+ * pressed), inline is whether the Inline switch was on, output is the EqEditor Output
+ * instance (for outputCode(output, 'mathml' | 'url'), in loader.js), and size, for an image,
+ * its { width, height } in px at the size slider's setting (see addImageSize() in loader.js), or
+ * null. `px` is an image being edited's own size, which the slider starts at. Resolves null if
+ * the user cancelled.
  */
 export function createEqnEditorDialog( config ) {
     var n = ++instanceCount;
@@ -161,7 +164,8 @@ export function createEqnEditorDialog( config ) {
         // `format` ('svg', 'mathml' or 'latex'), when editing: what the equation was inserted as, which
         // the dialog starts with, so an edited equation goes back in the form it came out of.
         // `inline`: whether it is an inline equation ($...$, for LaTeX), which the Inline switch starts at.
-        open: function ( initialLatex, format, inline ) {
+        // `px`: an image's own size, which the image size slider starts at.
+        open: function ( initialLatex, format, inline, px ) {
             return new Promise( function ( resolve ) {
                 if ( !overlay ) overlay = createOverlay();
                 overlay.classList.add( 'cc-eqneditor-open' );
@@ -180,7 +184,19 @@ export function createEqnEditorDialog( config ) {
                 okBtn.onclick = function () {
                     var current = eqTextArea ? eqTextArea.getTextArea().textContent.trim() : '';
                     var inlineToggle = overlay.querySelector( '.cc-eqneditor-inline-toggle' );
-                    finish( current ? { latex: current, output: eqOutput, mode: modeSelect.value, inline: !!( inlineToggle && inlineToggle.checked ) } : null );
+                    var result = current ? { latex: current, output: eqOutput, mode: modeSelect.value, inline: !!( inlineToggle && inlineToggle.checked ), size: null } : null;
+                    // An image at the size on the slider, once the API has read its natural size. Tiptap keeps
+                    // its selection while the dialog is open, so the insert can wait for it.
+                    var sizer = imageSizeIn( overlay ), px = sizer ? sizer.px() : 0;
+                    if ( !result || !px || !isImageFormat( result.mode ) || typeof eqOutput.imageSize !== 'function' ) {
+                        finish( result );
+                        return;
+                    }
+                    if ( eqOutput.setScale ) eqOutput.setScale( 1 );
+                    eqOutput.imageSize().then( function ( size ) {
+                        result.size = imagePxSize( size, px );
+                        finish( result );
+                    } );
                 };
                 cancelBtn.onclick = function () { finish( null ); };
                 closeBtn.onclick = function () { finish( null ); };
@@ -191,6 +207,8 @@ export function createEqnEditorDialog( config ) {
                     var insertMode = overlay.querySelector( '.cc-eqneditor-insert-mode' );
                     if ( format && insertMode && insertMode.querySelector( 'option[value="' + format + '"]' ) ) insertMode.value = format;
                     startInline( overlay.querySelector( '.cc-eqneditor-inline-toggle' ), inline, applyInline );
+                    var sizer = imageSizeIn( overlay );
+                    if ( sizer ) sizer.start( px || 0 );
                     eqTextArea.clear();
                     if ( initialLatex ) eqTextArea.insert( initialLatex, initialLatex.length );
                     eqTextArea.notifyOutputs();

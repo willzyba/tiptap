@@ -2,7 +2,7 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { createEqnEditorDialog } from './dialog.js';
-import { decodeEquation, outputCode, texOf, texAround, texPieces, injectTexStylesOnce, loadScriptOnce, ensureInit } from './loader.js';
+import { decodeEquation, outputCode, texOf, texAround, texPieces, injectTexStylesOnce, loadScriptOnce, ensureInit, imagePxOf } from './loader.js';
 import { domToOutputSpec } from './dom-to-output-spec.js';
 
 var DEFAULT_EDITOR_HOST = 'https://fxtex.codecogs.com';
@@ -11,6 +11,13 @@ var DEFAULT_RENDER_URL = 'https://fxtex.codecogs.com';
 // A bare host means https; a full origin (e.g. http://localhost:8010 for local development) is used as it is.
 function serverOrigin( host ) {
     return /^https?:\/\//.test( host ) ? host.replace( /\/+$/, '' ) : 'https://' + host;
+}
+
+// An image equation's style: its width and height, when it has them (see the width and height attributes).
+function imageStyle( attrs ) {
+    var safe = function ( v ) { return /^[\d.]+(px|em)$/.test( v || '' ) ? v : ''; };
+    var width = safe( attrs.width ), height = safe( attrs.height );
+    return width && height ? 'width: ' + width + '; height: ' + height + ';' : '';
 }
 
 // The dialog, set up from the extension's options.
@@ -29,9 +36,16 @@ function dialogFor( options ) {
 // Pro typesets where the page is shown ($...$ inline, $$...$$ not); otherwise an equation node.
 function contentOf( result, type ) {
     if ( result.mode === 'latex' ) return type.schema.text( texOf( result.latex, result.inline ) );
-    var attrs = { latex: result.latex, src: null, mathml: null };
+    var attrs = { latex: result.latex, src: null, mathml: null, width: null, height: null };
     if ( result.mode === 'mathml' ) attrs.mathml = outputCode( result.output, 'mathml' );
-    else attrs.src = outputCode( result.output, 'url' );
+    else {
+        attrs.src = outputCode( result.output, 'url' );
+        // At the size chosen in the dialog (its image size slider), in px.
+        if ( result.size ) {
+            attrs.width = result.size.width;
+            attrs.height = result.size.height;
+        }
+    }
     return type.create( attrs );
 }
 
@@ -207,7 +221,11 @@ export var EqnEditor = Node.create( {
             // Set only in 'mathml' mode - the exact MathML (plus its speech wrapper) EqEditor
             // produced, stored verbatim rather than regenerated on every render so that
             // rendering this node never depends on EqEditor being loaded.
-            mathml: { default: null, renderHTML: noAutoRender }
+            mathml: { default: null, renderHTML: noAutoRender },
+            // An image's size, as CSS lengths (px from the dialog's image size slider), from and to
+            // its style; null leaves it at its natural size.
+            width: { default: null, renderHTML: noAutoRender, parseHTML: function ( el ) { return el.style && el.style.width || null; } },
+            height: { default: null, renderHTML: noAutoRender, parseHTML: function ( el ) { return el.style && el.style.height || null; } }
         };
     },
 
@@ -255,11 +273,10 @@ export var EqnEditor = Node.create( {
         }
 
         // class="fxtex", as every inserted equation has: a site sizes them all with one rule.
-        return [ 'img', mergeAttributes( this.options.HTMLAttributes, HTMLAttributes, {
-            class: 'fxtex',
-            src: node.attrs.src || '',
-            alt: node.attrs.latex || ''
-        } ) ];
+        var img = { class: 'fxtex', src: node.attrs.src || '', alt: node.attrs.latex || '' };
+        var style = imageStyle( node.attrs );
+        if ( style ) img.style = style;
+        return [ 'img', mergeAttributes( this.options.HTMLAttributes, HTMLAttributes, img ) ];
     },
 
     // The live editing view. Separate from renderHTML (which is what editor.getHTML() uses)
@@ -284,6 +301,8 @@ export var EqnEditor = Node.create( {
                     img.className = 'fxtex';
                     img.src = n.attrs.src || '';
                     img.alt = n.attrs.latex || '';
+                    var style = imageStyle( n.attrs );
+                    if ( style ) img.style.cssText = style;
                     dom.appendChild( img );
                 }
             }
@@ -294,7 +313,8 @@ export var EqnEditor = Node.create( {
                 // MathML not inline has no display="block".
                 var inline = node.attrs.mathml ? !/<math\b[^>]*\sdisplay="block"/.test( node.attrs.mathml )
                     : /\.image\?(\\|%5C)inline\b/i.test( node.attrs.src || '' );
-                dialogFor( extensionOptions ).open( node.attrs.latex, node.attrs.mathml ? 'mathml' : 'svg', inline ).then( function ( result ) {
+                dialogFor( extensionOptions ).open( node.attrs.latex, node.attrs.mathml ? 'mathml' : 'svg', inline,
+                    imagePxOf( dom.querySelector( 'img' ) ) ).then( function ( result ) {
                     if ( !result ) return;
 
                     var pos = typeof getPos === 'function' ? getPos() : null;
