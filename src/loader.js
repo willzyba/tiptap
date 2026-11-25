@@ -458,8 +458,8 @@ export function addEditorControls( root, design, parts ) {
             insertAs.setAttribute( 'data-cc-remembered', '' );
         }
         insertAs.addEventListener( 'change', function () { prefs.insertAs = insertAs.value; save(); } );
-        // The inserted image's size, beside it while it is set to an image - see addImageSize().
-        addImageSize( insertAs, prefs, save, parts.sizeSelect );
+        // The equation's size, beside it - see addSizeSlider().
+        addSizeSlider( insertAs, prefs, save, parts.sizeForMathML !== undefined ? parts.sizeForMathML : !!design.sizeControl );
     }
 
     stackPanes( root, prefs, save );
@@ -487,69 +487,59 @@ export function addEditorControls( root, design, parts ) {
     }
 }
 
-// The size of an inserted image (SVG or PNG), in px: the height of its text, as a font size - the
-// image server draws a normal equation at IMAGE_PX to the em, so an image is given IMAGE_PX px for
-// each em of its natural size, times this over IMAGE_PX. Chosen on a slider just before the Insert
-// as menu, shown only while that is set to an image, and remembered as prefs.imageSize; it takes
-// over from the design's relative Size menu (`scaleSelect`), which then goes, as that is for MathML.
-var IMAGE_PX = 16, IMAGE_PX_MIN = 8, IMAGE_PX_MAX = 64;
+// The equation's size against a normal one (Output.setScale()), in %: a slider just before Insert as,
+// as the Google sidebar has, with the size on its right. It shows while Insert as is an image (SVG or
+// PNG), which the scale sizes in em (Output.imageSize()), and for MathML too where the design asks for
+// it (design.sizeControl) and the host can scale MathML; never for LaTeX, which has no size of its own.
+// The size is remembered as prefs.size, and an equation being edited starts at its own size.
+var SIZE_MIN = 50, SIZE_MAX = 300, SIZE_STEP = 5;
 export function isImageFormat( format ) { return format === 'svg' || format === 'png'; }
-function addImageSize( insertAs, prefs, save, scaleSelect ) {
-    if ( !insertAs || !insertAs.parentNode || insertAs.parentNode.querySelector( '.cc-eqn-image-size' ) ) return;
+function addSizeSlider( insertAs, prefs, save, forMathML ) {
+    if ( !insertAs || !insertAs.parentNode || insertAs.parentNode.querySelector( '.cc-eqn-size' ) ) return;
     var label = document.createElement( 'label' );
-    label.className = 'cc-eqn-image-size';
-    label.title = 'The size of the inserted image: the height of its text, in pixels';
-    label.innerHTML = '<span>Size</span><input type="range" min="' + IMAGE_PX_MIN + '" max="' + IMAGE_PX_MAX + '" step="1" ' +
-        'aria-label="Image size, in pixels"><output></output>';
+    label.className = 'cc-eqn-size';
+    label.title = 'The equation\u2019s size, against a normal one';
+    label.innerHTML = '<span>Size</span><input type="range" min="' + SIZE_MIN + '" max="' + SIZE_MAX + '" step="' + SIZE_STEP + '">' +
+        '<output></output>';
     insertAs.parentNode.insertBefore( label, insertAs );
     var range = label.querySelector( 'input' ), shown = label.querySelector( 'output' );
-    var set = function ( px ) {
-        px = Math.round( Math.min( IMAGE_PX_MAX, Math.max( IMAGE_PX_MIN, Number( px ) || IMAGE_PX ) ) );
-        range.value = px;
-        shown.textContent = px + 'px';
-        return px;
+    var set = function ( pct ) {
+        pct = Math.round( ( Number( pct ) || 100 ) / SIZE_STEP ) * SIZE_STEP;
+        pct = Math.min( SIZE_MAX, Math.max( SIZE_MIN, pct ) );
+        range.value = pct;
+        shown.textContent = pct + '%';
+        return pct;
     };
-    var show = function ( el, on ) {
-        if ( !el ) return;
-        if ( on ) el.style.removeProperty( 'display' );
-        else el.style.setProperty( 'display', 'none', 'important' );
-    };
+    var applies = function () { return isImageFormat( insertAs.value ) || ( forMathML && insertAs.value === 'mathml' ); };
     var follow = function () {
-        var image = isImageFormat( insertAs.value );
-        show( label, image );
-        range.disabled = !image;
-        show( scaleSelect, !image );
+        if ( applies() ) label.style.removeProperty( 'display' );
+        else label.style.setProperty( 'display', 'none', 'important' );
     };
-    set( prefs.imageSize );
-    range.addEventListener( 'input', function () { prefs.imageSize = set( range.value ); } );
+    set( prefs.size );
+    range.addEventListener( 'input', function () { prefs.size = set( range.value ); } );
     range.addEventListener( 'change', save );
     insertAs.addEventListener( 'change', follow );
     follow();
-    // For the host: px(), the size chosen; start(px), as the dialog opens, shows an equation being
-    // edited at its own size (not remembered), else the remembered one, and follows Insert as, which
-    // the host may have set itself.
-    label.ccImageSize = {
-        px: function () { return set( range.value ); },
-        start: function ( px ) { set( px > 0 ? px : prefs.imageSize ); follow(); }
+    // For the host: scale(), the size chosen, as Output.setScale() takes it, or 0 where the slider does
+    // not apply; start(scale), as the dialog opens, shows an equation being edited at its own size (not
+    // remembered), else the remembered one, and follows Insert as, which the host may have set itself.
+    label.ccSize = {
+        scale: function () { return applies() ? set( range.value ) / 100 : 0; },
+        start: function ( scale ) { set( scale > 0 ? scale * 100 : prefs.size ); follow(); }
     };
 }
-// The image size slider in `root` (see addImageSize()), or null.
-export function imageSizeIn( root ) {
-    var label = root && root.querySelector( '.cc-eqn-image-size' );
-    return label && label.ccImageSize || null;
+// The Size slider in `root` (see addSizeSlider()), or null.
+export function sizeSliderIn( root ) {
+    var label = root && root.querySelector( '.cc-eqn-size' );
+    return label && label.ccSize || null;
 }
-// An image's size from Output.imageSize() - in em, at a scale of 1 - at `px` (see IMAGE_PX).
-export function imagePxSize( size, px ) {
-    var at = function ( em ) { return Math.round( parseFloat( em ) * px * 10 ) / 10 + 'px'; };
-    return size ? { width: at( size.width ), height: at( size.height ) } : null;
-}
-// The size an image on the page was inserted at, in px (see IMAGE_PX): from its width - a style in px
-// or (inserted before the slider) em, or a width attribute - against its natural width, so it must have
-// loaded. 0 if unknown.
-export function imagePxOf( img ) {
+// The scale an image on the page was inserted at, against its natural size: from its width - a style
+// in em (the image server's 16px to the em) or px, or a width attribute - so it must have loaded.
+// 0 if unknown.
+export function imageScaleOf( img ) {
     if ( !img || !img.nodeName || img.nodeName.toLowerCase() !== 'img' || !img.naturalWidth ) return 0;
     var width = /^([\d.]+)(px|em)$/.exec( img.style.width || '' ) || /^([\d.]+)()$/.exec( img.getAttribute( 'width' ) || '' );
-    return width ? Math.round( parseFloat( width[ 1 ] ) * ( width[ 2 ] === 'em' ? IMAGE_PX : 1 ) * IMAGE_PX / img.naturalWidth ) : 0;
+    return width ? parseFloat( width[ 1 ] ) * ( width[ 2 ] === 'em' ? 16 : 1 ) / img.naturalWidth : 0;
 }
 
 // The LaTeX markup above the maths view while LaTeX is on, rather than in its place, with a bar
@@ -801,13 +791,13 @@ function injectPredictorStylesOnce() {
         '.cc-toolbar-size input { width: 72px !important; min-width: 36px !important; flex: 0 1 72px !important; margin: 0 !important; padding: 0 !important; ' +
             'accent-color: var(--cc-accent, #003794) !important; }' +
         '.cc-toolbar-size output { min-width: 3em !important; text-align: right !important; }' +
-        // The inserted image's size, beside Insert as (addImageSize()).
-        '.cc-eqn-image-size { display: inline-flex !important; align-items: center !important; gap: 6px !important; margin: 0 !important; padding: 0 !important; ' +
+        // The equation's size, beside Insert as (addSizeSlider()).
+        '.cc-eqn-size { display: inline-flex !important; align-items: center !important; gap: 6px !important; margin: 0 !important; padding: 0 !important; ' +
             'font: inherit !important; color: #54647c !important; cursor: pointer !important; white-space: nowrap !important; user-select: none !important; }' +
-        '.cc-eqn-image-size span, .cc-eqn-image-size output { font: inherit !important; color: inherit !important; }' +
-        '.cc-eqn-image-size input { width: 96px !important; min-width: 48px !important; flex: 0 1 96px !important; height: auto !important; margin: 0 !important; ' +
+        '.cc-eqn-size span, .cc-eqn-size output { font: inherit !important; color: inherit !important; }' +
+        '.cc-eqn-size input { width: 96px !important; min-width: 48px !important; flex: 0 1 96px !important; height: auto !important; margin: 0 !important; ' +
             'padding: 0 !important; border: 0 !important; background: none !important; accent-color: var(--cc-accent, #003794) !important; cursor: pointer !important; }' +
-        '.cc-eqn-image-size output { min-width: 2.8em !important; text-align: right !important; }' +
+        '.cc-eqn-size output { min-width: 2.8em !important; text-align: right !important; }' +
         // The bar between the LaTeX markup and the maths view, while both show (stackPanes()).
         '.cc-eqn-panes-split { display: none !important; }' +
         '.cc-eqn-both > .cc-eqn-panes-split { display: block !important; flex: 0 0 auto !important; height: 9px !important; margin: 1px 0 !important; ' +

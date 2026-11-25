@@ -2,7 +2,7 @@ import { Node, mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 import { createEqnEditorDialog } from './dialog.js';
-import { decodeEquation, outputCode, texOf, texAround, texPieces, injectTexStylesOnce, loadScriptOnce, ensureInit, imagePxOf } from './loader.js';
+import { decodeEquation, outputCode, texOf, texAround, texPieces, injectTexStylesOnce, loadScriptOnce, ensureInit, imageScaleOf } from './loader.js';
 import { domToOutputSpec } from './dom-to-output-spec.js';
 
 var DEFAULT_EDITOR_HOST = 'https://fxtex.codecogs.com';
@@ -40,7 +40,7 @@ function contentOf( result, type ) {
     if ( result.mode === 'mathml' ) attrs.mathml = outputCode( result.output, 'mathml' );
     else {
         attrs.src = outputCode( result.output, 'url' );
-        // At the size chosen in the dialog (its image size slider), in px.
+        // At the size chosen in the dialog (its Size slider), in em.
         if ( result.size ) {
             attrs.width = result.size.width;
             attrs.height = result.size.height;
@@ -222,7 +222,7 @@ export var EqnEditor = Node.create( {
             // produced, stored verbatim rather than regenerated on every render so that
             // rendering this node never depends on EqEditor being loaded.
             mathml: { default: null, renderHTML: noAutoRender },
-            // An image's size, as CSS lengths (px from the dialog's image size slider), from and to
+            // An image's size, as CSS lengths (em, at the dialog's Size slider's scale), from and to
             // its style; null leaves it at its natural size.
             width: { default: null, renderHTML: noAutoRender, parseHTML: function ( el ) { return el.style && el.style.width || null; } },
             height: { default: null, renderHTML: noAutoRender, parseHTML: function ( el ) { return el.style && el.style.height || null; } }
@@ -314,7 +314,7 @@ export var EqnEditor = Node.create( {
                 var inline = node.attrs.mathml ? !/<math\b[^>]*\sdisplay="block"/.test( node.attrs.mathml )
                     : /\.image\?(\\|%5C)inline\b/i.test( node.attrs.src || '' );
                 dialogFor( extensionOptions ).open( node.attrs.latex, node.attrs.mathml ? 'mathml' : 'svg', inline,
-                    imagePxOf( dom.querySelector( 'img' ) ) ).then( function ( result ) {
+                    node.attrs.mathml ? 0 : imageScaleOf( dom.querySelector( 'img' ) ) || 1 ).then( function ( result ) {
                     if ( !result ) return;
 
                     var pos = typeof getPos === 'function' ? getPos() : null;
