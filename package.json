@@ -1,6 +1,6 @@
 {
   "name": "@codecogs/fxeditor-tiptap",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "fxEditor, CodeCogs' LaTeX equation editor, as a Tiptap extension",
   "keywords": [
     "fxeditor",
