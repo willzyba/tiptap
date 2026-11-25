@@ -39,7 +39,7 @@ function contentOf( result, type ) {
     var attrs = { latex: result.latex, src: null, mathml: null, width: null, height: null };
     if ( result.mode === 'mathml' ) attrs.mathml = outputCode( result.output, 'mathml' );
     else {
-        attrs.src = outputCode( result.output, 'url' );
+        attrs.src = outputCode( result.output, result.mode === 'png' ? 'png' : 'url' );
         // At the size chosen in the dialog (its Size slider), in em.
         if ( result.size ) {
             attrs.width = result.size.width;
@@ -313,7 +313,7 @@ export var EqnEditor = Node.create( {
                 // MathML not inline has no display="block".
                 var inline = node.attrs.mathml ? !/<math\b[^>]*\sdisplay="block"/.test( node.attrs.mathml )
                     : /\.image\?(\\|%5C)inline\b/i.test( node.attrs.src || '' );
-                dialogFor( extensionOptions ).open( node.attrs.latex, node.attrs.mathml ? 'mathml' : 'svg', inline,
+                dialogFor( extensionOptions ).open( node.attrs.latex, node.attrs.mathml ? 'mathml' : /png\.(image|latex)\?/.test( node.attrs.src || '' ) ? 'png' : 'svg', inline,
                     node.attrs.mathml ? 0 : imageScaleOf( dom.querySelector( 'img' ) ) || 1 ).then( function ( result ) {
                     if ( !result ) return;
 

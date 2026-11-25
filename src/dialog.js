@@ -93,9 +93,10 @@ export function createEqnEditorDialog( config ) {
                     '</label>' +
                     '<div class="cc-eqn-bar-right cc-eqneditor-modal-actions">' +
                         '<select class="cc-eqneditor-insert-mode cc-eqn-select" title="How to insert the equation">' +
-                            '<option value="mathml" selected>Insert MathML</option>' +
-                            '<option value="svg">Insert SVG</option>' +
-                            '<option value="latex">Insert LaTeX</option>' +
+                            '<option value="mathml" selected>MathML</option>' +
+                            '<option value="svg">SVG</option>' +
+                            '<option value="png">PNG</option>' +
+                            '<option value="latex">LaTeX</option>' +
                         '</select>' +
                         '<button type="button" class="cc-eqn-btn cc-eqneditor-modal-cancel">Cancel</button>' +
                         '<button type="button" class="cc-eqn-btn cc-eqn-primary cc-eqneditor-modal-ok">OK</button>' +

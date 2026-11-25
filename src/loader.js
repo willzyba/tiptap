@@ -264,8 +264,8 @@ export function injectStyleOverridesOnce( fontUrl ) {
 // author. The toolbar's rows and scale go to Toolbar.link() itself; everything else is applied
 // here, once the editor is mounted - CSS scoped to this editor's root, then the starting state of
 // the LaTeX toggle and the "Insert as" menu.
-// The dialog's size when the design does not set one: about 700 by 450 pixels.
-var DEFAULT_WIDTH = 700, DEFAULT_HEIGHT = 450;
+// The dialog's size when the design does not set one: about 700 by 500 pixels.
+var DEFAULT_WIDTH = 700, DEFAULT_HEIGHT = 500;
 function designWidth( design ) { return Number( design && design.width ) > 0 ? Number( design.width ) : DEFAULT_WIDTH; }
 function designHeight( design ) { return Number( design && design.height ) > 0 ? Number( design.height ) : DEFAULT_HEIGHT; }
 var designCount = 0;
@@ -354,12 +354,21 @@ export function applyDesign( root, design, latexToggle, insertSelect ) {
 }
 
 // Re-asserts the API's own .CCMathView/.fxtex rules, which host resets and revert-layer override.
-// The equation as an image URL ('url') or as MathML ('mathml'). fxeditor-api replaced Output.exportAs()
-// with getEquationURL() and setFormat()/setWrapper()/getCode() (its 9630657); exportAs() still serves an
-// API from before that. The format is set each time: the same Output gives both.
+// The equation as an image URL - SVG ('url') or PNG ('png') - or as MathML ('mathml'). fxeditor-api replaced
+// Output.exportAs() with getEquationURL() and setFormat()/setWrapper()/getCode() (its 9630657); exportAs() still
+// serves an API from before that. The format is set each time: the same Output gives all three. A PNG is
+// drawn at PNG_DPI for a normal size (96 dpi is the SVG's own size), so it stays sharp once it is given the
+// SVG's size; the Output is left at SVG, which Output.imageSize() reads.
+var PNG_DPI = 192;
 export function outputCode( output, kind ) {
-    if ( typeof output.exportAs === 'function' ) return output.exportAs( kind );
+    if ( typeof output.exportAs === 'function' && kind !== 'png' ) return output.exportAs( kind );
     if ( kind === 'mathml' ) return output.setFormat( 'mathml' ).setWrapper( 'html' ).getCode();
+    if ( kind === 'png' && typeof output.setDpi === 'function' ) {
+        var scale = typeof output.getScale === 'function' ? output.getScale() : 1;
+        var url = output.setFormat( 'png' ).setDpi( Math.round( PNG_DPI * scale ) ).getEquationURL();
+        output.setFormat( 'svg' );
+        return url;
+    }
     return output.setFormat( 'svg' ).getEquationURL();
 }
 
@@ -488,7 +497,7 @@ export function addEditorControls( root, design, parts ) {
 }
 
 // The equation's size against a normal one (Output.setScale()), in %: a slider just before Insert as,
-// as the Google sidebar has, with the size on its right. It shows while Insert as is an image (SVG or
+// with the size on its right and what it is in its tooltip. It shows while Insert as is an image (SVG or
 // PNG), which the scale sizes in em (Output.imageSize()), and for MathML too where the design asks for
 // it (design.sizeControl) and the host can scale MathML; never for LaTeX, which has no size of its own.
 // The size is remembered as prefs.size, and an equation being edited starts at its own size.
@@ -498,8 +507,8 @@ function addSizeSlider( insertAs, prefs, save, forMathML ) {
     if ( !insertAs || !insertAs.parentNode || insertAs.parentNode.querySelector( '.cc-eqn-size' ) ) return;
     var label = document.createElement( 'label' );
     label.className = 'cc-eqn-size';
-    label.title = 'The equation\u2019s size, against a normal one';
-    label.innerHTML = '<span>Size</span><input type="range" min="' + SIZE_MIN + '" max="' + SIZE_MAX + '" step="' + SIZE_STEP + '">' +
+    label.title = 'The equation\u2019s size in the document, against a normal one (100%)';
+    label.innerHTML = '<input type="range" min="' + SIZE_MIN + '" max="' + SIZE_MAX + '" step="' + SIZE_STEP + '" aria-label="Equation size">' +
         '<output></output>';
     insertAs.parentNode.insertBefore( label, insertAs );
     var range = label.querySelector( 'input' ), shown = label.querySelector( 'output' );
@@ -534,12 +543,18 @@ export function sizeSliderIn( root ) {
     return label && label.ccSize || null;
 }
 // The scale an image on the page was inserted at, against its natural size: from its width - a style
-// in em (the image server's 16px to the em) or px, or a width attribute - so it must have loaded.
-// 0 if unknown.
+// in em (the image server's 16px to the em) or px, or a width attribute - so it must have loaded. A
+// PNG's natural size is its \dpi's (the server's 300 without one) against the SVG's 96. 0 if unknown.
 export function imageScaleOf( img ) {
     if ( !img || !img.nodeName || img.nodeName.toLowerCase() !== 'img' || !img.naturalWidth ) return 0;
     var width = /^([\d.]+)(px|em)$/.exec( img.style.width || '' ) || /^([\d.]+)()$/.exec( img.getAttribute( 'width' ) || '' );
-    return width ? parseFloat( width[ 1 ] ) * ( width[ 2 ] === 'em' ? 16 : 1 ) / img.naturalWidth : 0;
+    if ( !width ) return 0;
+    var src = img.getAttribute( 'src' ) || '', dpi = 96;
+    if ( /png\.image\?/.test( src ) ) {
+        try { src = decodeURIComponent( src ); } catch ( e ) {}
+        dpi = Number( ( /\\dpi\{(\d+)\}/.exec( src ) || [ 0, 300 ] )[ 1 ] );
+    }
+    return parseFloat( width[ 1 ] ) * ( width[ 2 ] === 'em' ? 16 : 1 ) * dpi / 96 / img.naturalWidth;
 }
 
 // The LaTeX markup above the maths view while LaTeX is on, rather than in its place, with a bar
@@ -794,7 +809,7 @@ function injectPredictorStylesOnce() {
         // The equation's size, beside Insert as (addSizeSlider()).
         '.cc-eqn-size { display: inline-flex !important; align-items: center !important; gap: 6px !important; margin: 0 !important; padding: 0 !important; ' +
             'font: inherit !important; color: #54647c !important; cursor: pointer !important; white-space: nowrap !important; user-select: none !important; }' +
-        '.cc-eqn-size span, .cc-eqn-size output { font: inherit !important; color: inherit !important; }' +
+        '.cc-eqn-size output { font: inherit !important; color: inherit !important; }' +
         '.cc-eqn-size input { width: 96px !important; min-width: 48px !important; flex: 0 1 96px !important; height: auto !important; margin: 0 !important; ' +
             'padding: 0 !important; border: 0 !important; background: none !important; accent-color: var(--cc-accent, #003794) !important; cursor: pointer !important; }' +
         '.cc-eqn-size output { min-width: 2.8em !important; text-align: right !important; }' +
